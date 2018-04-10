@@ -1,6 +1,5 @@
 package context
 
-import "github.com/SunMaybo/go-jewel/context"
 
 const (
 	DB  = "DB"
@@ -27,8 +26,8 @@ func (c *Context) Service(name string) interface{} {
 	return c.ServiceMap[name]
 }
 
-func (c *Context) Db() context.Db {
-	return c.Service(DB).(context.Db)
+func (c *Context) Db() Db {
+	return c.Service(DB).(Db)
 }
 
 /*func (c *Context) Log() seelog.LoggerInterface {
