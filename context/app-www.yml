@@ -1,0 +1,18 @@
+jewel:
+   name: tokenup-worker
+   profiles:
+        active: env
+   port: 8080
+   log: ./config/og.xml
+   mysql: admin:mypass@tcp(127.0.0.1:3306)/tokenup-btcd?charset=utf8mb4,utf8&collation=utf8mb4_unicode_ci
+   postgres: ""
+   sqlite3: ""
+   redis:
+      host: ""
+      password: ""
+      db: 0
+   max-idle-conns: 10
+   max-Open-conns: 100
+
+
+
