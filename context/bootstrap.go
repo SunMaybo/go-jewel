@@ -1,7 +1,6 @@
-package go_jewel
+package context
 
 import (
-	"github.com/SunMaybo/go-jewel/context"
 	"github.com/gin-gonic/gin"
 	"fmt"
 	"github.com/SunMaybo/go-jewel/router"
@@ -9,13 +8,13 @@ import (
 )
 
 func Run(r func(engine *gin.Engine)) {
-	flagService := context.FlagService{
+	flagService := FlagService{
 		Params: make(map[string]string),
-		Cmd:    make(map[string]func(c context.Config))}
-	flagService.Default(func(c context.Config) {
+		Cmd:    make(map[string]func(c Config))}
+	flagService.Default(func(c Config) {
 		defaultService(c)
 	})
-	flagService.PutCmd("start", func(c context.Config) {
+	flagService.PutCmd("start", func(c Config) {
 		port := c.Jewel.Port
 		if port <= 0 {
 			port = 8080
@@ -36,34 +35,34 @@ func Run(r func(engine *gin.Engine)) {
 	flagService.Start()
 }
 
-func RunWithConfig(c context.Config) {
-	flagService := context.FlagService{
+func RunWithConfig(c Config) {
+	flagService := FlagService{
 		Params: make(map[string]string),
-		Cmd:    make(map[string]func(c context.Config))}
-	flagService.Default(func(c context.Config) {
+		Cmd:    make(map[string]func(c Config))}
+	flagService.Default(func(c Config) {
 		defaultService(c)
 	})
 	flagService.StartConfig(c)
 }
 
 func RunWithConfigDir(dir string, env string) {
-	flagService := context.FlagService{
+	flagService := FlagService{
 		Params: make(map[string]string),
-		Cmd:    make(map[string]func(c context.Config))}
-	flagService.Default(func(c context.Config) {
+		Cmd:    make(map[string]func(c Config))}
+	flagService.Default(func(c Config) {
 		defaultService(c)
 	})
 	flagService.StartConfigDir(dir, env)
 }
 
-func defaultService(c context.Config) {
+func defaultService(c Config) {
 	//1. 日志
 	//log := Logger{}
 	//see := log.GetLogger(c.Jewel.Log)
 	//Services.ServiceMap[LOG] = see
 	//2. 数据库
 	NewLogger(c.Jewel.Log)
-	db := context.Db{}
+	db := Db{}
 	db.Open(c)
-	context.Services.ServiceMap[context.DB] = db
+	Services.ServiceMap[DB] = db
 }
