@@ -75,8 +75,7 @@ func RunWithConfig(c Config) {
 func RunWithConfigDir(dir string, env string) {
 	flagService := FlagService{
 		Params: make(map[string]string),
-		Cmd:    make(map[string]func(c Config)),
-		Extend: make(map[string]func(c Config))}
+		Cmd:    make(map[string]func(c Config))}
 	flagService.Default(func(c Config) {
 		defaultService(c)
 	})
