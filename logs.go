@@ -2,7 +2,7 @@ package go_jewel
 
 import (
 	"github.com/cihub/seelog"
-	"go-jewel/context"
+	"github.com/SunMaybo/go-jewel/context"
 )
 
 

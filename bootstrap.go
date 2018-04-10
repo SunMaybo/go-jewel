@@ -1,10 +1,10 @@
 package go_jewel
 
 import (
-	"go-jewel/context"
+	"github.com/SunMaybo/go-jewel/context"
 	"github.com/gin-gonic/gin"
 	"fmt"
-	"go-jewel/router"
+	"github.com/SunMaybo/go-jewel/router"
 	"strconv"
 )
 

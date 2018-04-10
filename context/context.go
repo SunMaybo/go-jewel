@@ -1,9 +1,6 @@
 package context
 
-import (
-	//"github.com/cihub/seelog"
-	"github.com/regcostajr/go-web3/db"
-)
+import "github.com/SunMaybo/go-jewel/context"
 
 const (
 	DB  = "DB"
@@ -30,9 +27,10 @@ func (c *Context) Service(name string) interface{} {
 	return c.ServiceMap[name]
 }
 
-func (c *Context) Db() db.DB {
-	return c.Service(DB).(db.DB)
+func (c *Context) Db() context.Db {
+	return c.Service(DB).(context.Db)
 }
+
 /*func (c *Context) Log() seelog.LoggerInterface {
 	if log, ok := c.Service(LOG).(seelog.LoggerInterface); ok {
 		return log
