@@ -42,22 +42,33 @@ func (f *FlagService) PutCmd(name string, fun func(c Config)) {
 func (f *FlagService) Default(fun func(c Config)) {
 	f.Cmd["default"] = fun
 }
+func (f *FlagService) PutExtend(fun func(c Config)) {
+	f.Cmd["extend"] = fun
+}
 func (f *FlagService) Start() {
 	f.PutFlagString("env", "www", "startup environment")
 	cmd := flag.Arg(0)
 	cfg := Load("./config", f.Params["env"])
 	f.Cmd["default"](cfg) //默认的方法
-	fun := f.Cmd[cmd]
-	if fun != nil {
+	if fun, ok := f.Cmd[cmd]; ok {
 		fun(cfg)
 	} else {
 		fmt.Println("cmd no found")
 	}
+	if fun, ok := f.Cmd["extend"]; ok {
+		fun(cfg)
+	}
 }
 func (f *FlagService) StartConfig(cfg Config) {
 	f.Cmd["default"](cfg) //默认的方法
+	if fun, ok := f.Cmd["extend"]; ok {
+		fun(cfg)
+	}
 }
 func (f *FlagService) StartConfigDir(dir string, env string) {
 	cfg := Load(dir, f.Params["env"])
 	f.Cmd["default"](cfg) //默认的方法
+	if fun, ok := f.Cmd["extend"]; ok {
+		fun(cfg)
+	}
 }
