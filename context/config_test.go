@@ -6,9 +6,12 @@ import (
 )
 
 func TestConfig(t *testing.T) {
-	app := Config{}
+	app := ConfigMap{}
 	app.Load("./app-www.yml")
-	fmt.Println(app)
+	for _, v := range app {
+		fmt.Println(v)
+	}
+
 }
 func TestApp(t *testing.T) {
 	app := Load("./", "www")
@@ -16,9 +19,9 @@ func TestApp(t *testing.T) {
 }
 
 func TestConfigDir(t *testing.T) {
-	hash:=make(map[interface{}]interface{})
-	hash["1234"]=34
-	if value,ok:=hash["1234"];ok {
+	hash := make(map[interface{}]interface{})
+	hash["1234"] = 34
+	if value, ok := hash["1234"]; ok {
 		fmt.Println(value)
 	}
 

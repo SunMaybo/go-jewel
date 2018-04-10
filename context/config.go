@@ -32,15 +32,15 @@ type Config struct {
 
 func (config *Config) Load(fileName string) {
 	if strings.HasSuffix(fileName, ".yaml") || strings.HasSuffix(fileName, ".yml") {
-		loadYml(fileName, config)
+		config.loadYml(fileName)
 	} else if strings.HasSuffix(fileName, ".xml") {
-		loadXml(fileName, config)
+		config.loadXml(fileName)
 	} else {
-		loadJson(fileName, config)
+		config.loadJson(fileName)
 	}
 }
 
-func loadYml(fileName string, config *Config) {
+func (config *Config) loadYml(fileName string) {
 	buff, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatalln(err)
@@ -51,7 +51,7 @@ func loadYml(fileName string, config *Config) {
 	}
 
 }
-func loadXml(fileName string, config *Config) {
+func (config *Config) loadXml(fileName string) {
 	buff, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatalln(err)
@@ -61,7 +61,7 @@ func loadXml(fileName string, config *Config) {
 		log.Fatalln(err)
 	}
 }
-func loadJson(fileName string, config *Config) {
+func (config *Config) loadJson(fileName string) {
 	buff, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatalln(err)
@@ -71,3 +71,47 @@ func loadJson(fileName string, config *Config) {
 		log.Fatalln(err)
 	}
 }
+
+type ConfigMap map[interface{}]interface{}
+func (config *ConfigMap) Load(fileName string) {
+	if strings.HasSuffix(fileName, ".yaml") || strings.HasSuffix(fileName, ".yml") {
+		config.loadYml(fileName)
+	} else if strings.HasSuffix(fileName, ".xml") {
+		config.loadXml(fileName)
+	} else {
+		config.loadJson(fileName)
+	}
+}
+
+func (config *ConfigMap) loadYml(fileName string) {
+	buff, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	err = yaml.Unmarshal(buff, config)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+}
+func (config *ConfigMap) loadXml(fileName string) {
+	buff, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	xml.Unmarshal(buff, config)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+func (config *ConfigMap) loadJson(fileName string) {
+	buff, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	json.Unmarshal(buff, config)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+

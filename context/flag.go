@@ -10,8 +10,9 @@ import (
 )
 
 type FlagService struct {
-	Params map[string]string
-	Cmd    map[string]func(c Config)
+	Params  map[string]string
+	Cmd     map[string]func(c Config)
+	Extends func(cfgMap ConfigMap)
 }
 
 func (f *FlagService) Load() error {
@@ -39,10 +40,14 @@ func (f *FlagService) PutFlagFloat64(name string, value float64, usage string) {
 func (f *FlagService) PutCmd(name string, fun func(c Config)) {
 	f.Cmd[name] = fun
 }
+func (f *FlagService) PutExtend(fun func(cfgMap ConfigMap)) {
+	f.Extends = fun
+}
+
 func (f *FlagService) Default(fun func(c Config)) {
 	f.Cmd["default"] = fun
 }
-func (f *FlagService) PutExtend(fun func(c Config)) {
+func (f *FlagService) PutConfigExtend(fun func(c Config)) {
 	f.Cmd["extend"] = fun
 }
 func (f *FlagService) Start() {
@@ -58,17 +63,27 @@ func (f *FlagService) Start() {
 	if fun, ok := f.Cmd["extend"]; ok {
 		fun(cfg)
 	}
+	cfgMap := LoadMap("./config", f.Params["env"])
+	if f.Extends != nil {
+		f.Extends(cfgMap)
+	}
+
 }
 func (f *FlagService) StartConfig(cfg Config) {
 	f.Cmd["default"](cfg) //默认的方法
 	if fun, ok := f.Cmd["extend"]; ok {
 		fun(cfg)
 	}
+
 }
 func (f *FlagService) StartConfigDir(dir string, env string) {
 	cfg := Load(dir, f.Params["env"])
 	f.Cmd["default"](cfg) //默认的方法
 	if fun, ok := f.Cmd["extend"]; ok {
 		fun(cfg)
+	}
+	cfgMap := LoadMap(dir, f.Params["env"])
+	if f.Extends != nil {
+		f.Extends(cfgMap)
 	}
 }

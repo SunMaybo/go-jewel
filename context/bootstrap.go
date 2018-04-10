@@ -7,19 +7,24 @@ import (
 	"strconv"
 )
 
-func Run(r func(engine *gin.Engine)) {
-	flagService := FlagService{
-		Params: make(map[string]string),
-		Cmd:    make(map[string]func(c Config))}
-	flagService.Default(func(c Config) {
-		defaultService(c)
+type BootStrap struct {
+	flagService FlagService
+}
+
+func (b *BootStrap) Run(r func(engine *gin.Engine)) {
+	b.flagService = FlagService{
+		Params:  make(map[string]string),
+		Cmd:     make(map[string]func(c Config)),
+		Extends: nil}
+	b.flagService.Default(func(c Config) {
+		b.defaultService(c)
 	})
-	flagService.PutCmd("start", func(c Config) {
+	b.flagService.PutCmd("start", func(c Config) {
 		port := c.Jewel.Port
 		if port <= 0 {
 			port = 8080
 		}
-		if p, ok := flagService.Params["port"]; ok {
+		if p, ok := b.flagService.Params["port"]; ok {
 
 			cmdPort, _ := strconv.Atoi(p)
 			if cmdPort > 0 {
@@ -32,22 +37,23 @@ func Run(r func(engine *gin.Engine)) {
 		router.Load(engine)
 		engine.Run(fmt.Sprintf(":%d", + port))
 	})
-	flagService.Start()
+	b.flagService.Start()
 }
-func RunWithExtend(r func(engine *gin.Engine), fun func(c Config)) {
-	flagService := FlagService{
-		Params: make(map[string]string),
-		Cmd:    make(map[string]func(c Config))}
-	flagService.Default(func(c Config) {
-		defaultService(c)
+func (b *BootStrap) RunWithExtend(r func(engine *gin.Engine), fun func(cfgMap ConfigMap)) {
+	b.flagService = FlagService{
+		Params:  make(map[string]string),
+		Cmd:     make(map[string]func(c Config)),
+		Extends: nil}
+	b.flagService.Default(func(c Config) {
+		b.defaultService(c)
 	})
-	flagService.PutExtend(fun)
-	flagService.PutCmd("start", func(c Config) {
+	b.flagService.PutExtend(fun)
+	b.flagService.PutCmd("start", func(c Config) {
 		port := c.Jewel.Port
 		if port <= 0 {
 			port = 8080
 		}
-		if p, ok := flagService.Params["port"]; ok {
+		if p, ok := b.flagService.Params["port"]; ok {
 
 			cmdPort, _ := strconv.Atoi(p)
 			if cmdPort > 0 {
@@ -60,39 +66,42 @@ func RunWithExtend(r func(engine *gin.Engine), fun func(c Config)) {
 		router.Load(engine)
 		engine.Run(fmt.Sprintf(":%d", + port))
 	})
-	flagService.Start()
+	b.flagService.Start()
 }
-func RunWithConfig(c Config) {
-	flagService := FlagService{
-		Params: make(map[string]string),
-		Cmd:    make(map[string]func(c Config))}
-	flagService.Default(func(c Config) {
-		defaultService(c)
+func (b *BootStrap) RunWithConfig(c Config) {
+	b.flagService = FlagService{
+		Params:  make(map[string]string),
+		Cmd:     make(map[string]func(c Config)),
+		Extends: nil}
+	b.flagService.Default(func(c Config) {
+		b.defaultService(c)
 	})
-	flagService.StartConfig(c)
+	b.flagService.StartConfig(c)
 }
 
-func RunWithConfigDir(dir string, env string) {
-	flagService := FlagService{
-		Params: make(map[string]string),
-		Cmd:    make(map[string]func(c Config))}
-	flagService.Default(func(c Config) {
-		defaultService(c)
+func (b *BootStrap) RunWithConfigDir(dir string, env string) {
+	b.flagService = FlagService{
+		Params:  make(map[string]string),
+		Cmd:     make(map[string]func(c Config)),
+		Extends: nil}
+	b.flagService.Default(func(c Config) {
+		b.defaultService(c)
 	})
-	flagService.StartConfigDir(dir, env)
+	b.flagService.StartConfigDir(dir, env)
 }
-func RunWithConfigDirAndExtend(dir string, env string, fun func(c Config)) {
-	flagService := FlagService{
-		Params: make(map[string]string),
-		Cmd:    make(map[string]func(c Config))}
-	flagService.Default(func(c Config) {
-		defaultService(c)
+func (b *BootStrap) RunWithConfigDirAndExtend(dir string, env string, fun func(cfgMap ConfigMap)) {
+	b.flagService = FlagService{
+		Params:  make(map[string]string),
+		Cmd:     make(map[string]func(c Config)),
+		Extends: nil}
+	b.flagService.PutExtend(fun)
+	b.flagService.Default(func(c Config) {
+		b.defaultService(c)
 	})
-	flagService.PutExtend(fun)
-	flagService.StartConfigDir(dir, env)
+	b.flagService.StartConfigDir(dir, env)
 }
 
-func defaultService(c Config) {
+func (b *BootStrap) defaultService(c Config) {
 	//1. 日志
 	//log := Logger{}
 	//see := log.GetLogger(c.Jewel.Log)
