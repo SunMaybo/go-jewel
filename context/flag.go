@@ -77,12 +77,12 @@ func (f *FlagService) StartConfig(cfg Config) {
 
 }
 func (f *FlagService) StartConfigDir(dir string, env string) {
-	cfg := Load(dir, f.Params["env"])
+	cfg := Load(dir, env)
 	f.Cmd["default"](cfg) //默认的方法
 	if fun, ok := f.Cmd["extend"]; ok {
 		fun(cfg)
 	}
-	cfgMap := LoadMap(dir, f.Params["env"])
+	cfgMap := LoadMap(dir, env)
 	if f.Extends != nil {
 		f.Extends(cfgMap)
 	}
