@@ -14,11 +14,14 @@ func Load(engine *gin.Engine) {
 	}
 }
 
-func Register(funs ... func(engine *gin.Engine)) {
-	for _, v := range funs {
+func Registeries(fs []func(engine *gin.Engine)) {
+	for _, v := range fs {
 		if v != nil {
 			array.PushBack(v)
 		}
 
 	}
+}
+func Register(fun func(engine *gin.Engine)) {
+	array.PushBack(fun)
 }
