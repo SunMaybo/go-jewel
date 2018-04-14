@@ -21,12 +21,7 @@ func main() {
 	})*/
 
 	boot.Run3("./config", "www", nil, func(engine *gin.Engine) {
-		engine.GET("info", func(i *gin.Context) {
-
-		})
-	}, func(engine *gin.Engine) {
 		engine.POST("/health", func(i *gin.Context) {
-
 		})
 	})
 }
