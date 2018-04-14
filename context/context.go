@@ -30,12 +30,6 @@ func (c *Context) Db() Db {
 	return c.Service(DB).(Db)
 }
 
-/*func (c *Context) Log() seelog.LoggerInterface {
-	if log, ok := c.Service(LOG).(seelog.LoggerInterface); ok {
-		return log
-	}
-	return nil
-}*/
 func (c *Context) web() interface{} {
 	return c.Service(WEB)
 }

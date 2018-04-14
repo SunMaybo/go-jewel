@@ -40,26 +40,25 @@ func (c *Cmd) PutFlagFloat64(name string, value float64, usage string) {
 func (c *Cmd) PutCmd(name string, fun func(c Config)) {
 	c.Cmd[name] = fun
 }
-func (c *Cmd) PutExtend(fun func(cfgMap ConfigMap)) {
+func (c *Cmd) putExtend(fun func(cfgMap ConfigMap)) {
 	c.Extends = fun
 }
 
-func (c *Cmd) Default(fun func(c Config)) {
+func (c *Cmd) defaultCmd(fun func(c Config)) {
 	c.Cmd["default"] = fun
 }
-func (c *Cmd) PutConfigExtend(fun func(c Config)) {
-	c.Cmd["extend"] = fun
-}
 func (c *Cmd) Start() {
-	c.PutFlagString("env", "www", "startup environment")
+	c.PutFlagString("e", "www", "startup environment")
+	flag.Parse()
 	cmd := flag.Arg(0)
-	cfg := Load("./config", c.Params["env"])
-	c.Cmd["default"](cfg) //默认的方法
-	if fun, ok := c.Cmd[cmd]; ok {
-		fun(cfg)
-	} else {
-		fmt.Println("cmd no found")
+	if cmd != "" {
+		fmt.Printf("action: %s\n", cmd)
+		fmt.Printf("env: %s\n", c.Params["e"])
 	}
+
+	fmt.Printf("-------------------------------------------------------\n")
+
+	cfg := Load("./config", c.Params["env"])
 	if fun, ok := c.Cmd["extend"]; ok {
 		fun(cfg)
 	}
@@ -67,18 +66,23 @@ func (c *Cmd) Start() {
 	if c.Extends != nil {
 		c.Extends(cfgMap)
 	}
+	c.Cmd["default"](cfg) //默认的方法
+	if fun, ok := c.Cmd[cmd]; ok {
+		fun(cfg)
+	} else {
+		fmt.Println("cmd no found")
+	}
 
 }
 func (c *Cmd) StartConfig(cfg Config) {
-	c.Cmd["default"](cfg) //默认的方法
 	if fun, ok := c.Cmd["extend"]; ok {
 		fun(cfg)
 	}
+	c.Cmd["default"](cfg) //默认的方法
 
 }
 func (c *Cmd) StartConfigDir(dir string, env string) {
 	cfg := Load(dir, env)
-	c.Cmd["default"](cfg) //默认的方法
 	if fun, ok := c.Cmd["extend"]; ok {
 		fun(cfg)
 	}
@@ -86,4 +90,5 @@ func (c *Cmd) StartConfigDir(dir string, env string) {
 	if c.Extends != nil {
 		c.Extends(cfgMap)
 	}
+	c.Cmd["default"](cfg) //默认的方法
 }
