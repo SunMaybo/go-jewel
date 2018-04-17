@@ -6,8 +6,8 @@ import (
 	//_ "github.com/jinzhu/gorm/dialects/postgres"
 	//_ "github.com/jinzhu/gorm/dialects/sqlite"
 	//_ "github.com/jinzhu/gorm/dialects/mssql"
-	"fmt"
 	"github.com/go-redis/redis"
+	"github.com/cihub/seelog"
 )
 
 type Db struct {
@@ -73,9 +73,9 @@ func (d *Db) Open(c Config) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println("redis ping result:" + pong)
+		seelog.Info("redis ping result:" + pong)
 	}
-	fmt.Println("db connection success")
+	seelog.Info("db connection success")
 	return nil
 }
 

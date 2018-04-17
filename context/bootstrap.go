@@ -7,7 +7,10 @@ import (
 	"time"
 	"github.com/cihub/seelog"
 	"net/http"
+	"go-jewel/jsonrpc"
 )
+
+var methodMap jsonrpc.MethodMap
 
 type boot struct {
 	cmd Cmd
@@ -25,6 +28,61 @@ func (b *boot) GetCmd() *Cmd {
 	return &b.cmd
 }
 
+func (b *boot) JsonRpc() *boot {
+	methodMap = make(jsonrpc.MethodMap)
+	return b
+}
+func (b *boot) RegisterJsonRpc(name string, method interface{}) {
+	methodMap.Register(name, method)
+}
+func (b *boot) RunJsonRpc2(relativePath string, dir string, env string, r func(engine *gin.Engine), fun func(cfgMap ConfigMap)) {
+	b.cmd.putExtend(fun)
+	b.cmd.defaultCmd(func(c Config) {
+		if c.Jewel.JsonRpc.Enabled {
+			b.defaultService(c, []func(engine *gin.Engine){b.jsonRpc(relativePath, c.Jewel.JsonRpc.UserName, c.Jewel.JsonRpc.Password), r}, c.Jewel.Profiles.Active, c.Jewel.Port)
+		} else {
+			b.defaultService(c, []func(engine *gin.Engine){r}, env, c.Jewel.Port)
+		}
+
+	})
+	b.cmd.StartConfigDir(dir, env)
+}
+func (b *boot) RunJsonRpc(relativePath string, r func(engine *gin.Engine)) {
+	b.cmd.defaultCmd(func(c Config) {
+		if c.Jewel.JsonRpc.Enabled {
+			b.defaultService(c, []func(engine *gin.Engine){b.jsonRpc(relativePath, c.Jewel.JsonRpc.UserName, c.Jewel.JsonRpc.Password), r}, c.Jewel.Profiles.Active, c.Jewel.Port)
+		} else {
+			b.defaultService(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
+		}
+	})
+	b.cmd.Start()
+
+}
+func (b *boot) jsonRpc(relativePath string, username string, password string) func(engine *gin.Engine) {
+	return func(engine *gin.Engine) {
+		engine.POST(relativePath, func(context *gin.Context) {
+			auth := context.GetHeader("Authorization")
+			basicAuth := jsonrpc.BaseAuth(username, password)
+			if auth != basicAuth {
+				context.String(http.StatusUnauthorized, "authorization error")
+				return
+			}
+			request := jsonrpc.Request{}
+			context.BindJSON(&request)
+			if request.JsonRpc != "2.0" {
+				context.String(http.StatusBadRequest, "param error")
+				return
+			}
+			if request.Method == "" {
+				context.String(http.StatusBadRequest, "method is not nil")
+				return
+			}
+			resp := methodMap.Call(request.Method, request.Params)
+			resp.Id = request.Id
+			context.JSON(http.StatusOK, resp)
+		})
+	}
+}
 func (b *boot) Run(r func(engine *gin.Engine)) {
 	b.cmd.defaultCmd(func(c Config) {
 		b.defaultService(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)

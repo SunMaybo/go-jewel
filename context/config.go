@@ -26,6 +26,11 @@ type Config struct {
 			Host     string `json:"host"`
 			Password string `json:"password"`
 		} `json:"redis"`
+		JsonRpc struct {
+			Enabled  bool   `json:"enabled"`
+			UserName string `json:"username"`
+			Password string `json:"password"`
+		} `json:"jsonrpc"`
 		Sqlite3 string `json:"sqlite3"`
 	} `json:"jewel"`
 }
@@ -73,6 +78,7 @@ func (config *Config) loadJson(fileName string) {
 }
 
 type ConfigMap map[interface{}]interface{}
+
 func (config *ConfigMap) Load(fileName string) {
 	if strings.HasSuffix(fileName, ".yaml") || strings.HasSuffix(fileName, ".yml") {
 		config.loadYml(fileName)
@@ -114,4 +120,3 @@ func (config *ConfigMap) loadJson(fileName string) {
 		log.Fatalln(err)
 	}
 }
-
