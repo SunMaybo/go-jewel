@@ -136,7 +136,11 @@ func (b *boot) RunWithConfigDirAndExtend(dir string, env string, fun func(cfgMap
 func (b *boot) defaultService(c Config, fs []func(engine *gin.Engine), env string, port int) {
 	NewLogger(c.Jewel.Log)
 	db := Db{}
-	db.Open(c)
+	err := db.Open(c)
+	if err != nil {
+		seelog.Error(err)
+		return
+	}
 	Services.ServiceMap[DB] = db
 	if c.Jewel.Port > 0 {
 		engine := gin.Default()
