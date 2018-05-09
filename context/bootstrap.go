@@ -13,7 +13,10 @@ import (
 var methodMap jsonrpc.MethodMap
 
 type boot struct {
-	cmd Cmd
+	cmd    Cmd
+	End    func()
+	After  func(c Config)
+	Before func()
 }
 
 func NewInstance() boot {
@@ -139,9 +142,13 @@ func (b *boot) defaultService(c Config, fs []func(engine *gin.Engine), env strin
 	err := db.Open(c)
 	if err != nil {
 		seelog.Error(err)
+		seelog.Flush()
 		return
 	}
 	Services.ServiceMap[DB] = db
+	go func() {
+		b.After(c)
+	}()
 	if c.Jewel.Port > 0 {
 		engine := gin.Default()
 		b.defaultRouter(engine, env, port, time.Now().String(), c.Jewel.Name)
