@@ -146,9 +146,11 @@ func (b *boot) defaultService(c Config, fs []func(engine *gin.Engine), env strin
 		return
 	}
 	Services.ServiceMap[DB] = db
-	go func() {
-		b.After(c)
-	}()
+	if b.After != nil {
+		go func() {
+			b.After(c)
+		}()
+	}
 	if c.Jewel.Port > 0 {
 		engine := gin.Default()
 		b.defaultRouter(engine, env, port, time.Now().String(), c.Jewel.Name)
