@@ -34,9 +34,12 @@ func (d *Db) Open(c Config) error {
 		if err != nil {
 			return err
 		}
+		db.Debug()
+		//db.LogMode(true)
 		db.DB().SetMaxIdleConns(maxIdleConns)
 		db.DB().SetMaxOpenConns(maxOpenConns)
 		d.MysqlDb = db
+		seelog.Info("db connection success")
 	}
 	//postgres
 
@@ -49,6 +52,7 @@ func (d *Db) Open(c Config) error {
 		db.DB().SetMaxIdleConns(maxIdleConns)
 		db.DB().SetMaxOpenConns(maxOpenConns)
 		d.PostDb = db
+		seelog.Info("db connection success")
 	}
 	//sqlite3
 	sqlite3 := c.Jewel.Sqlite3
@@ -60,6 +64,7 @@ func (d *Db) Open(c Config) error {
 		db.DB().SetMaxIdleConns(maxIdleConns)
 		db.DB().SetMaxOpenConns(maxOpenConns)
 		d.Sqlite3Db = db
+		seelog.Info("db connection success")
 	}
 	//redis
 	redisConfig := c.Jewel.Redis
@@ -74,8 +79,8 @@ func (d *Db) Open(c Config) error {
 			return err
 		}
 		seelog.Info("redis ping result:" + pong)
+		seelog.Info("db connection success")
 	}
-	seelog.Info("db connection success")
 	return nil
 }
 

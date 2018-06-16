@@ -13,48 +13,67 @@ import (
 var methodMap jsonrpc.MethodMap
 
 type boot struct {
-	cmd    Cmd
-	End    func()
-	After  func(c Config)
-	Before func()
+	cmd Cmd
 }
 
 func NewInstance() boot {
 	boot := boot{}
 	boot.cmd = Cmd{
-		Params:  make(map[string]string),
-		Cmd:     make(map[string]func(c Config)),
-		Extends: nil}
+		Params:       make(map[string]*string),
+		Cmd:          make(map[string]func(c Config)),
+		AsyncMethods: make(map[string][]func(c Config, cfgMap ConfigMap)),
+		Extends:      nil}
 	return boot
 }
 func (b *boot) GetCmd() *Cmd {
 	return &b.cmd
 }
+
+func (b *boot) AddAfterMethod(funs ... func(c Config, cfgMap ConfigMap)) boot {
+	asyncMtds := b.cmd.AsyncMethods["afters"]
+	if funs != nil {
+		for _, fun := range funs {
+			asyncMtds = append(asyncMtds, fun)
+		}
+	}
+	b.cmd.AsyncMethods["afters"] = asyncMtds
+	return *b
+}
+
 func (b *boot) JsonRpc() *boot {
 	methodMap = make(jsonrpc.MethodMap)
 	return b
 }
+
 func (b *boot) RegisterJsonRpc(name string, method interface{}) {
 	methodMap.Register(name, method)
 }
 func (b *boot) RunJsonRpc2(relativePath string, dir string, env string, r func(engine *gin.Engine), fun func(cfgMap ConfigMap)) {
 	b.cmd.putExtend(fun)
-	b.cmd.defaultCmd(func(c Config) {
-		if c.Jewel.JsonRpc.Enabled {
-			b.defaultService(c, []func(engine *gin.Engine){b.jsonRpc(relativePath, c.Jewel.JsonRpc.UserName, c.Jewel.JsonRpc.Password), r}, c.Jewel.Profiles.Active, c.Jewel.Port)
-		} else {
-			b.defaultService(c, []func(engine *gin.Engine){r}, env, c.Jewel.Port)
-		}
 
+	b.cmd.defaultCmd(func(c Config) {
+		b.defaultService(c, env, c.Jewel.Port)
 	})
+	b.cmd.httpCmd(func(c Config) {
+		if c.Jewel.JsonRpc.Enabled {
+			b.http(c, []func(engine *gin.Engine){b.jsonRpc(relativePath, c.Jewel.JsonRpc.UserName, c.Jewel.JsonRpc.Password), r}, c.Jewel.Profiles.Active, c.Jewel.Port)
+		} else {
+			b.http(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
+		}
+	})
+
 	b.cmd.StartConfigDir(dir, env)
 }
 func (b *boot) RunJsonRpc(relativePath string, r func(engine *gin.Engine)) {
 	b.cmd.defaultCmd(func(c Config) {
+		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
+
+	})
+	b.cmd.httpCmd(func(c Config) {
 		if c.Jewel.JsonRpc.Enabled {
-			b.defaultService(c, []func(engine *gin.Engine){b.jsonRpc(relativePath, c.Jewel.JsonRpc.UserName, c.Jewel.JsonRpc.Password), r}, c.Jewel.Profiles.Active, c.Jewel.Port)
+			b.http(c, []func(engine *gin.Engine){b.jsonRpc(relativePath, c.Jewel.JsonRpc.UserName, c.Jewel.JsonRpc.Password), r}, c.Jewel.Profiles.Active, c.Jewel.Port)
 		} else {
-			b.defaultService(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
+			b.http(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
 		}
 	})
 	b.cmd.Start()
@@ -87,7 +106,10 @@ func (b *boot) jsonRpc(relativePath string, username string, password string) fu
 }
 func (b *boot) Run(r func(engine *gin.Engine)) {
 	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
+		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
+	})
+	b.cmd.httpCmd(func(c Config) {
+		b.http(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
 	})
 	b.cmd.Start()
 
@@ -95,46 +117,60 @@ func (b *boot) Run(r func(engine *gin.Engine)) {
 func (b *boot) Run2(dir string, env string, r func(engine *gin.Engine), fun func(cfgMap ConfigMap)) {
 	b.cmd.putExtend(fun)
 	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, []func(engine *gin.Engine){r}, env, c.Jewel.Port)
+		b.defaultService(c, env, c.Jewel.Port)
+	})
+	b.cmd.httpCmd(func(c Config) {
+		b.http(c, []func(engine *gin.Engine){r}, env, c.Jewel.Port)
 	})
 	b.cmd.StartConfigDir(dir, env)
 }
 func (b *boot) Run3(dir string, env string, fun func(cfgMap ConfigMap), fs ...func(engine *gin.Engine)) {
 	b.cmd.putExtend(fun)
 	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, fs, c.Jewel.Profiles.Active, c.Jewel.Port)
+		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
+	})
+	b.cmd.httpCmd(func(c Config) {
+		b.http(c, fs, env, c.Jewel.Port)
 	})
 	b.cmd.StartConfigDir(dir, env)
 }
 func (b *boot) RunWithExtend(r func(engine *gin.Engine), fun func(cfgMap ConfigMap)) {
 	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
+		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
 	})
 	b.cmd.putExtend(fun)
-
+	b.cmd.httpCmd(func(c Config) {
+		b.http(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
+	})
 	b.cmd.Start()
 }
 func (b *boot) RunWithConfig(c Config) {
 	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, nil, c.Jewel.Profiles.Active, c.Jewel.Port)
+		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
+	})
+	b.cmd.httpCmd(func(c Config) {
+		b.http(c, nil, c.Jewel.Profiles.Active, c.Jewel.Port)
 	})
 	b.cmd.StartConfig(c)
 }
 func (b *boot) RunWithConfigDir(dir string, env string) {
 	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, nil, env, c.Jewel.Port)
+		b.defaultService(c, env, c.Jewel.Port)
+	})
+	b.cmd.httpCmd(func(c Config) {
+		b.http(c, nil, env, c.Jewel.Port)
 	})
 	b.cmd.StartConfigDir(dir, env)
 }
 func (b *boot) RunWithConfigDirAndExtend(dir string, env string, fun func(cfgMap ConfigMap)) {
 	b.cmd.putExtend(fun)
 	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, nil, env, c.Jewel.Port)
+		b.defaultService(c, env, c.Jewel.Port)
 	})
 	b.cmd.StartConfigDir(dir, env)
 }
 
-func (b *boot) defaultService(c Config, fs []func(engine *gin.Engine), env string, port int) {
+func (b *boot) defaultService(c Config, env string, port int) {
 	NewLogger(c.Jewel.Log)
 	db := Db{}
 	err := db.Open(c)
@@ -144,11 +180,8 @@ func (b *boot) defaultService(c Config, fs []func(engine *gin.Engine), env strin
 		return
 	}
 	Services.ServiceMap[DB] = db
-	if b.After != nil {
-		go func() {
-			b.After(c)
-		}()
-	}
+}
+func (b *boot) http(c Config, fs []func(engine *gin.Engine), env string, port int) {
 	if c.Jewel.Port > 0 {
 		engine := gin.Default()
 		b.defaultRouter(engine, env, port, time.Now().String(), c.Jewel.Name)
@@ -165,6 +198,7 @@ type Info struct {
 	BootTime string `json:"boot_time"`
 	Db       DbTx   `json:"db"`
 }
+
 type DbTx struct {
 	MysqlDb     string `json:"mysql_db"`
 	PostDb      string `json:"postgresql_db"`
