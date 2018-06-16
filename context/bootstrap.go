@@ -7,7 +7,7 @@ import (
 	"time"
 	"github.com/cihub/seelog"
 	"net/http"
-	"go-jewel/jsonrpc"
+	"github.com/SunMaybo/go-jewel/jsonrpc"
 )
 
 var methodMap jsonrpc.MethodMap
