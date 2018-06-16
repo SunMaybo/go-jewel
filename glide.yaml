@@ -1,0 +1,18 @@
+package: go-jewel
+import:
+- package: github.com/SunMaybo/go-jewel
+  subpackages:
+  - context
+  - jsonrpc
+- package: github.com/cihub/seelog
+  version: v2.6
+- package: github.com/gin-gonic/gin
+  version: v1.2
+- package: github.com/go-redis/redis
+  version: v6.12.0
+- package: github.com/jinzhu/gorm
+  version: v1.9.1
+  subpackages:
+  - dialects/mysql
+- package: gopkg.in/yaml.v2
+  version: v2.2.1
