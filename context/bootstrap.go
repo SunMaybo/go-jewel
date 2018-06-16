@@ -30,7 +30,6 @@ func NewInstance() boot {
 func (b *boot) GetCmd() *Cmd {
 	return &b.cmd
 }
-
 func (b *boot) JsonRpc() *boot {
 	methodMap = make(jsonrpc.MethodMap)
 	return b
@@ -121,7 +120,6 @@ func (b *boot) RunWithConfig(c Config) {
 	})
 	b.cmd.StartConfig(c)
 }
-
 func (b *boot) RunWithConfigDir(dir string, env string) {
 	b.cmd.defaultCmd(func(c Config) {
 		b.defaultService(c, nil, env, c.Jewel.Port)
