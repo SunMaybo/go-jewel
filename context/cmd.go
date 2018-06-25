@@ -5,7 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/SunMaybo/jewel-inject/inject"
+	"github.com/robfig/cron"
 )
 
 type Cmd struct {
@@ -33,7 +33,7 @@ func (c *Cmd) defaultCmd(fun func(c Config)) {
 func (c *Cmd) httpCmd(fun func(c Config)) {
 	c.Cmd["http"] = fun
 }
-func (c *Cmd) Start(inject inject.Injector, cfgPointer []interface{}, injectors []interface{}) {
+func (c *Cmd) Start(b *boot) {
 	c.PutFlagString("e", "", "startup environment")
 	flag.Parse()
 	cmd := flag.Arg(0)
@@ -46,24 +46,39 @@ func (c *Cmd) Start(inject inject.Injector, cfgPointer []interface{}, injectors 
 	dir := getCurrentDirectory()
 	cfg := Load(dir)
 	env := cfg.Jewel.Profiles.Active
-	for _, v := range cfgPointer {
+	for _, v := range b.cfgPointer {
 		LoadCfg(dir, v)
 		LoadEnvCfg(dir, env, v)
 	}
 	LoadEnvCfg(dir, env, &cfg)
 	// 注册配置
-	inject.Apply(cfgPointer ...)
-	inject.Apply(&cfg)
+	b.inject.Apply(b.cfgPointer ...)
+	b.inject.Apply(&cfg)
 	//注册依赖
-	inject.Apply(injectors...)
+	b.inject.Apply(b.injector...)
+	for _, f := range b.asyncFuns {
+		go func() {
+			f()
+		}()
+	}
+	for _, f := range b.funs {
+		f()
+	}
+	for _, task := range b.taskfun {
+		c := cron.New()
+		c.AddFunc(task.Cron, func() {
+			task.Fun()
+		})
+		c.Start()
 
+	}
 	c.Cmd["default"](cfg) //默认的方法
 	if fun, ok := c.Cmd[cmd]; ok {
 		fun(cfg)
 	} else {
 		fmt.Println("cmd no found")
 	}
-	inject.Inject()    //依赖扫描于加载
+	b.inject.Inject()  //依赖扫描于加载
 	c.Cmd["http"](cfg) //默认的方法
 
 }

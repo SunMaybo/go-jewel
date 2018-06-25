@@ -21,6 +21,9 @@ type boot struct {
 	cfgPointer []interface{}
 	injector   []interface{}
 	cmd        Cmd
+	taskfun    []Cron
+	funs       []func()
+	asyncFuns  []func()
 }
 
 func NewInstance() boot {
@@ -42,6 +45,18 @@ func (b *boot) GetCmd() *Cmd {
 func (b *boot) AddApply(pointer ... interface{}) *boot {
 	checkPointer(pointer)
 	b.injector = append(b.injector, pointer...)
+	return b
+}
+func (b *boot) AddTask(name, cron string, fun func()) *boot {
+	b.taskfun = append(b.taskfun, Cron{Name: name, Cron: cron, Fun: fun})
+	return b
+}
+func (b *boot) AddFun(fun func()) *boot {
+	b.funs = append(b.funs, fun)
+	return b
+}
+func (b *boot) AddAsyncFun(fun func()) *boot {
+	b.asyncFuns = append(b.asyncFuns, fun)
 	return b
 }
 func checkPointer(pointer interface{}) {
@@ -78,7 +93,7 @@ func (b *boot) RunJsonRpc(relativePath string, r func(engine *gin.Engine)) {
 			b.http(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
 		}
 	})
-	b.cmd.Start(b.inject, b.cfgPointer, b.injector)
+	b.cmd.Start(b)
 
 }
 func (b *boot) jsonRpc(relativePath string, username string, password string) func(engine *gin.Engine) {
@@ -113,7 +128,7 @@ func (b *boot) Run(r func(engine *gin.Engine)) {
 	b.cmd.httpCmd(func(c Config) {
 		b.http(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
 	})
-	b.cmd.Start(b.inject, b.cfgPointer, b.injector)
+	b.cmd.Start(b)
 }
 
 func (b *boot) defaultService(c Config, env string, port int) {
