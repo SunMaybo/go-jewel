@@ -14,7 +14,7 @@ func TestConfig(t *testing.T) {
 
 }
 func TestApp(t *testing.T) {
-	app := Load("./", "www")
+	app := Load("./")
 	fmt.Println(app)
 }
 

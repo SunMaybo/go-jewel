@@ -8,38 +8,55 @@ import (
 	"github.com/cihub/seelog"
 	"net/http"
 	"github.com/SunMaybo/go-jewel/jsonrpc"
+	"os"
+	"github.com/SunMaybo/jewel-inject/inject"
+	"reflect"
+	"log"
 )
 
 var methodMap jsonrpc.MethodMap
 
 type boot struct {
-	cmd Cmd
+	inject     inject.Injector
+	cfgPointer []interface{}
+	injector   []interface{}
+	cmd        Cmd
 }
 
 func NewInstance() boot {
 	boot := boot{}
 	boot.cmd = Cmd{
-		Params:       make(map[string]*string),
-		Cmd:          make(map[string]func(c Config)),
-		AsyncMethods: make(map[string][]func(c Config, cfgMap ConfigMap)),
-		Extends:      nil}
+		Params: make(map[string]*string),
+		Cmd:    make(map[string]func(c Config)),
+	}
+	boot.inject = inject.New()
 	return boot
+}
+func (b *boot) GetInject() inject.Injector {
+	return b.inject
 }
 func (b *boot) GetCmd() *Cmd {
 	return &b.cmd
 }
 
-func (b *boot) AddAfterMethod(funs ... func(c Config, cfgMap ConfigMap)) boot {
-	asyncMtds := b.cmd.AsyncMethods["afters"]
-	if funs != nil {
-		for _, fun := range funs {
-			asyncMtds = append(asyncMtds, fun)
-		}
-	}
-	b.cmd.AsyncMethods["afters"] = asyncMtds
-	return *b
+func (b *boot) AddApply(pointer ... interface{}) *boot {
+	checkPointer(pointer)
+	b.injector = append(b.injector, pointer...)
+	return b
 }
-
+func checkPointer(pointer interface{}) {
+	if reflect.TypeOf(pointer).Kind() != reflect.Ptr {
+		log.Fatal("param must be pointer type")
+	}
+}
+func (b *boot) AddApplyCfg(pointers ... interface{}) *boot {
+	//映射配置文件内容
+	for e := range pointers {
+		checkPointer(pointers[e])
+	}
+	b.cfgPointer = append(b.cfgPointer, pointers...)
+	return b
+}
 func (b *boot) JsonRpc() *boot {
 	methodMap = make(jsonrpc.MethodMap)
 	return b
@@ -48,22 +65,7 @@ func (b *boot) JsonRpc() *boot {
 func (b *boot) RegisterJsonRpc(name string, method interface{}) {
 	methodMap.Register(name, method)
 }
-func (b *boot) RunJsonRpc2(relativePath string, dir string, env string, r func(engine *gin.Engine), fun func(cfgMap ConfigMap)) {
-	b.cmd.putExtend(fun)
 
-	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, env, c.Jewel.Port)
-	})
-	b.cmd.httpCmd(func(c Config) {
-		if c.Jewel.JsonRpc.Enabled {
-			b.http(c, []func(engine *gin.Engine){b.jsonRpc(relativePath, c.Jewel.JsonRpc.UserName, c.Jewel.JsonRpc.Password), r}, c.Jewel.Profiles.Active, c.Jewel.Port)
-		} else {
-			b.http(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
-		}
-	})
-
-	b.cmd.StartConfigDir(dir, env)
-}
 func (b *boot) RunJsonRpc(relativePath string, r func(engine *gin.Engine)) {
 	b.cmd.defaultCmd(func(c Config) {
 		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
@@ -76,7 +78,7 @@ func (b *boot) RunJsonRpc(relativePath string, r func(engine *gin.Engine)) {
 			b.http(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
 		}
 	})
-	b.cmd.Start()
+	b.cmd.Start(b.inject, b.cfgPointer, b.injector)
 
 }
 func (b *boot) jsonRpc(relativePath string, username string, password string) func(engine *gin.Engine) {
@@ -111,63 +113,7 @@ func (b *boot) Run(r func(engine *gin.Engine)) {
 	b.cmd.httpCmd(func(c Config) {
 		b.http(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
 	})
-	b.cmd.Start()
-
-}
-func (b *boot) Run2(dir string, env string, r func(engine *gin.Engine), fun func(cfgMap ConfigMap)) {
-	b.cmd.putExtend(fun)
-	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, env, c.Jewel.Port)
-	})
-	b.cmd.httpCmd(func(c Config) {
-		b.http(c, []func(engine *gin.Engine){r}, env, c.Jewel.Port)
-	})
-	b.cmd.StartConfigDir(dir, env)
-}
-func (b *boot) Run3(dir string, env string, fun func(cfgMap ConfigMap), fs ...func(engine *gin.Engine)) {
-	b.cmd.putExtend(fun)
-	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
-	})
-	b.cmd.httpCmd(func(c Config) {
-		b.http(c, fs, env, c.Jewel.Port)
-	})
-	b.cmd.StartConfigDir(dir, env)
-}
-func (b *boot) RunWithExtend(r func(engine *gin.Engine), fun func(cfgMap ConfigMap)) {
-	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
-	})
-	b.cmd.putExtend(fun)
-	b.cmd.httpCmd(func(c Config) {
-		b.http(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
-	})
-	b.cmd.Start()
-}
-func (b *boot) RunWithConfig(c Config) {
-	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
-	})
-	b.cmd.httpCmd(func(c Config) {
-		b.http(c, nil, c.Jewel.Profiles.Active, c.Jewel.Port)
-	})
-	b.cmd.StartConfig(c)
-}
-func (b *boot) RunWithConfigDir(dir string, env string) {
-	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, env, c.Jewel.Port)
-	})
-	b.cmd.httpCmd(func(c Config) {
-		b.http(c, nil, env, c.Jewel.Port)
-	})
-	b.cmd.StartConfigDir(dir, env)
-}
-func (b *boot) RunWithConfigDirAndExtend(dir string, env string, fun func(cfgMap ConfigMap)) {
-	b.cmd.putExtend(fun)
-	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, env, c.Jewel.Port)
-	})
-	b.cmd.StartConfigDir(dir, env)
+	b.cmd.Start(b.inject, b.cfgPointer, b.injector)
 }
 
 func (b *boot) defaultService(c Config, env string, port int) {
@@ -240,4 +186,16 @@ func (b *boot) defaultRouter(engine *gin.Engine, env string, port int, bootTime 
 		}
 		context.String(http.StatusOK, "%v", string(buff))
 	})
+}
+
+/*
+获取程序运行路径
+*/
+func getCurrentDirectory() string {
+	pwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	return pwd + "/config"
 }

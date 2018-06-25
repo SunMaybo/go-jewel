@@ -1,14 +1,8 @@
 jewel:
-   name: tokenup-worker
-   profiles:
-        active: env
+   name: tokenup-worker-www
    port: 8080
    log: ./config/log.xml
-   mysql: admin:mypass@tcp(127.0.0.1:3306)/tokenup-btcd?charset=utf8mb4,utf8&collation=utf8mb4_unicode_ci
-   jsonrpc:
-        username: admin
-        password: password
-        enabled: true
+   mysql: admin:mypass@tcp(127.0.0.1:3308)/tokenup-btcd?charset=utf8mb4,utf8&collation=utf8mb4_unicode_ci
    postgres: ""
    sqlite3: ""
    redis:
@@ -17,6 +11,10 @@ jewel:
       db: 0
    max-idle-conns: 10
    max-Open-conns: 100
+name: sun
+age: 34
+gendar: yt
+
 
 
 

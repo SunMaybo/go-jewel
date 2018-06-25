@@ -6,36 +6,61 @@ import (
 	"log"
 )
 
-func Load(dir string, env string) Config {
+var suffixCfgName = []string{"yml", "yaml", "xml", "json"}
+
+func Load(dir string) Config {
 	ifs, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	var name = ""
+loop:
 	for _, v := range ifs {
-		if !v.IsDir() && strings.HasPrefix(v.Name(), "app"+"-"+env) {
-			name = v.Name()
-			break
+		for e := range suffixCfgName {
+			if !v.IsDir() && strings.HasPrefix(v.Name(), "app."+suffixCfgName[e]) {
+				name = v.Name()
+				break loop
+			}
 		}
+
 	}
 	app := Config{}
 	app.Load(dir + "/" + name)
 	return app
 }
-
-func LoadMap(dir string, env string) map[interface{}]interface{} {
+func LoadCfg(dir string, inter interface{}) {
 	ifs, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	var name = ""
+loop:
 	for _, v := range ifs {
-		if !v.IsDir() && strings.HasPrefix(v.Name(), "app"+"-"+env) {
-			name = v.Name()
-			break
+		for e := range suffixCfgName {
+			if !v.IsDir() && strings.HasPrefix(v.Name(), "app."+suffixCfgName[e]) {
+				name = v.Name()
+				break loop
+			}
 		}
 	}
-	app := ConfigMap{}
-	app.Load(dir + "/" + name)
-	return app
+	app := ConfigStruct{}
+	app.Load(dir+"/"+name, inter)
+}
+func LoadEnvCfg(dir, env string, inter interface{}) {
+	ifs, err := ioutil.ReadDir(dir)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	var name = ""
+loop:
+	for _, v := range ifs {
+		for e := range suffixCfgName {
+			if !v.IsDir() && strings.HasPrefix(v.Name(), "app-"+env+"."+suffixCfgName[e]) {
+				name = v.Name()
+				break loop
+			}
+		}
+	}
+	app := ConfigStruct{}
+	app.Load(dir+"/"+name, inter)
 }

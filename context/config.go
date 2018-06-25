@@ -77,45 +77,46 @@ func (config *Config) loadJson(fileName string) {
 	}
 }
 
-type ConfigMap map[interface{}]interface{}
+type ConfigStruct struct {
+}
 
-func (config *ConfigMap) Load(fileName string) {
+func (config *ConfigStruct) Load(fileName string, inter interface{}) {
 	if strings.HasSuffix(fileName, ".yaml") || strings.HasSuffix(fileName, ".yml") {
-		config.loadYml(fileName)
+		config.loadYml(fileName, inter)
 	} else if strings.HasSuffix(fileName, ".xml") {
-		config.loadXml(fileName)
+		config.loadXml(fileName, inter)
 	} else {
-		config.loadJson(fileName)
+		config.loadJson(fileName, inter)
 	}
 }
 
-func (config *ConfigMap) loadYml(fileName string) {
+func (config *ConfigStruct) loadYml(fileName string, inter interface{}) {
 	buff, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	err = yaml.Unmarshal(buff, config)
+	err = yaml.Unmarshal(buff, inter)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 }
-func (config *ConfigMap) loadXml(fileName string) {
+func (config *ConfigStruct) loadXml(fileName string, inter interface{}) {
 	buff, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	xml.Unmarshal(buff, config)
+	err = xml.Unmarshal(buff, &inter)
 	if err != nil {
 		log.Fatalln(err)
 	}
 }
-func (config *ConfigMap) loadJson(fileName string) {
+func (config *ConfigStruct) loadJson(fileName string, inter interface{}) {
 	buff, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	json.Unmarshal(buff, config)
+	err = json.Unmarshal(buff, &inter)
 	if err != nil {
 		log.Fatalln(err)
 	}
