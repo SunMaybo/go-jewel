@@ -21,8 +21,8 @@ type Db struct {
 func (d *Db) Open(c Config) error {
 	//mysql
 	mysql := c.Jewel.Mysql
-	maxIdleConns := c.Jewel.Max_idle_conns
-	maxOpenConns := c.Jewel.Max_Open_conns
+	maxIdleConns := c.Jewel.Max_Idle_Conns
+	maxOpenConns := c.Jewel.Max_Open_Conns
 	if maxIdleConns == 0 {
 		maxIdleConns = 10
 	}
@@ -35,7 +35,7 @@ func (d *Db) Open(c Config) error {
 			return err
 		}
 		db.Debug()
-		db.LogMode(true)
+		db.LogMode(c.Jewel.SqlShow)
 		db.DB().SetMaxIdleConns(maxIdleConns)
 		db.DB().SetMaxOpenConns(maxOpenConns)
 		d.MysqlDb = db

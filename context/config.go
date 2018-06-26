@@ -11,28 +11,29 @@ import (
 
 type Config struct {
 	Jewel struct {
-		Log            string `json:"log"`
-		Max_Open_conns int    `json:"max-Open-conns"`
-		Max_idle_conns int    `json:"max-idle-conns"`
-		Mysql          string `json:"mysql"`
-		Name           string `json:"name"`
-		Port           int    `json:"port"`
-		Postgres       string `json:"postgres"`
+		Log            string `json:"log" yaml:"log"`
+		Max_Open_Conns int    `json:"max-open-conns" yaml:"max-open-conns"`
+		Max_Idle_Conns int    `json:"max-idle-conns" yaml:"max-idle-conns" xml:"max-idle-conns"`
+		SqlShow        bool   `json:"sql_show" yaml:"sql_show" xml:"sql_show"`
+		Mysql          string `json:"mysql" yaml:"mysql" xml:"mysql"`
+		Name           string `json:"name" yaml:"name" xml:"name"`
+		Port           int    `json:"port" yaml:"port" xml:"port"`
+		Postgres       string `json:"postgres" yaml:"postgres" xml:"postgres"`
 		Profiles struct {
 			Active string `json:"active"`
-		} `json:"profiles"`
+		} `json:"profiles" yaml:"profiles" xml:"profiles"`
 		Redis struct {
 			Db       int    `json:"db"`
 			Host     string `json:"host"`
 			Password string `json:"password"`
-		} `json:"redis"`
+		} `json:"redis" yaml:"redis" xml:"redis"`
 		JsonRpc struct {
 			Enabled  bool   `json:"enabled"`
 			UserName string `json:"username"`
 			Password string `json:"password"`
-		} `json:"jsonrpc"`
-		Sqlite3 string `json:"sqlite3"`
-	} `json:"jewel"`
+		} `json:"jsonrpc" yaml:"jsonrpc" xml:"jsonrpc"`
+		Sqlite3 string `json:"sqlite3" yaml:"sqlite3" xml:"sqlite3"`
+	} `json:"jewel" yaml:"jewel" xml:"jewel"`
 }
 
 func (config *Config) Load(fileName string) {
