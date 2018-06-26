@@ -16,7 +16,7 @@ import (
 
 var methodMap jsonrpc.MethodMap
 
-type boot struct {
+type Boot struct {
 	inject     *inject.Injector
 	cfgPointer []interface{}
 	injector   []interface{}
@@ -26,8 +26,8 @@ type boot struct {
 	asyncFuns  []func()
 }
 
-func NewInstance() boot {
-	boot := boot{}
+func NewInstance() Boot {
+	boot := Boot{}
 	boot.cmd = Cmd{
 		Params: make(map[string]*string),
 		Cmd:    make(map[string]func(c Config)),
@@ -35,29 +35,29 @@ func NewInstance() boot {
 	boot.inject = inject.New()
 	return boot
 }
-func (b *boot) GetInject() *inject.Injector {
+func (b *Boot) GetInject() *inject.Injector {
 	return b.inject
 }
-func (b *boot) GetCmd() *Cmd {
+func (b *Boot) GetCmd() *Cmd {
 	return &b.cmd
 }
 
-func (b *boot) AddApply(pointers ... interface{}) *boot {
+func (b *Boot) AddApply(pointers ... interface{}) *Boot {
 	for e := range pointers {
 		checkPointer(pointers[e])
 	}
 	b.injector = append(b.injector, pointers...)
 	return b
 }
-func (b *boot) AddTask(name, cron string, fun func()) *boot {
+func (b *Boot) AddTask(name, cron string, fun func()) *Boot {
 	b.taskfun = append(b.taskfun, Cron{Name: name, Cron: cron, Fun: fun})
 	return b
 }
-func (b *boot) AddFun(fun func()) *boot {
+func (b *Boot) AddFun(fun func()) *Boot {
 	b.funs = append(b.funs, fun)
 	return b
 }
-func (b *boot) AddAsyncFun(fun func()) *boot {
+func (b *Boot) AddAsyncFun(fun func()) *Boot {
 	b.asyncFuns = append(b.asyncFuns, fun)
 	return b
 }
@@ -66,7 +66,7 @@ func checkPointer(pointer interface{}) {
 		log.Fatal("param must be pointer type")
 	}
 }
-func (b *boot) AddApplyCfg(pointers ... interface{}) *boot {
+func (b *Boot) AddApplyCfg(pointers ... interface{}) *Boot {
 	//映射配置文件内容
 	for e := range pointers {
 		checkPointer(pointers[e])
@@ -74,16 +74,16 @@ func (b *boot) AddApplyCfg(pointers ... interface{}) *boot {
 	b.cfgPointer = append(b.cfgPointer, pointers...)
 	return b
 }
-func (b *boot) JsonRpc() *boot {
+func (b *Boot) JsonRpc() *Boot {
 	methodMap = make(jsonrpc.MethodMap)
 	return b
 }
 
-func (b *boot) RegisterJsonRpc(name string, method interface{}) {
+func (b *Boot) RegisterJsonRpc(name string, method interface{}) {
 	methodMap.Register(name, method)
 }
 
-func (b *boot) RunJsonRpc(relativePath string, r func(engine *gin.Engine)) {
+func (b *Boot) RunJsonRpc(relativePath string, r func(engine *gin.Engine)) {
 	b.cmd.defaultCmd(func(c Config) {
 		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
 
@@ -98,7 +98,7 @@ func (b *boot) RunJsonRpc(relativePath string, r func(engine *gin.Engine)) {
 	b.cmd.Start(b)
 
 }
-func (b *boot) jsonRpc(relativePath string, username string, password string) func(engine *gin.Engine) {
+func (b *Boot) jsonRpc(relativePath string, username string, password string) func(engine *gin.Engine) {
 	return func(engine *gin.Engine) {
 		engine.POST(relativePath, func(context *gin.Context) {
 			auth := context.GetHeader("Authorization")
@@ -123,17 +123,29 @@ func (b *boot) jsonRpc(relativePath string, username string, password string) fu
 		})
 	}
 }
-func (b *boot) Run(r func(engine *gin.Engine)) {
+func (b *Boot) Start() (*Boot) {
 	b.cmd.defaultCmd(func(c Config) {
 		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
 	})
+	b.cmd.Start(b)
+	return b
+}
+func (b *Boot) StartAndDir(dir string) (*Boot) {
+	b.cmd.defaultCmd(func(c Config) {
+		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
+	})
+	b.cmd.StartAndDir(b,dir)
+	return b
+}
+func (b *Boot) BindHttp(r func(engine *gin.Engine)) {
+
 	b.cmd.httpCmd(func(c Config) {
 		b.http(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
 	})
-	b.cmd.Start(b)
+	b.cmd.Http(b)
 }
 
-func (b *boot) defaultService(c Config, env string, port int) {
+func (b *Boot) defaultService(c Config, env string, port int) {
 	NewLogger(c.Jewel.Log)
 	db := Db{}
 	err := db.Open(c)
@@ -144,7 +156,7 @@ func (b *boot) defaultService(c Config, env string, port int) {
 	}
 	Services.ServiceMap[DB] = db
 }
-func (b *boot) http(c Config, fs []func(engine *gin.Engine), env string, port int) {
+func (b *Boot) http(c Config, fs []func(engine *gin.Engine), env string, port int) {
 	if c.Jewel.Port > 0 {
 		engine := gin.Default()
 		b.defaultRouter(engine, env, port, time.Now().String(), c.Jewel.Name)
@@ -171,7 +183,7 @@ type DbTx struct {
 	RedisDb     string `json:"redis_db"`
 }
 
-func (b *boot) defaultRouter(engine *gin.Engine, env string, port int, bootTime string, name string) {
+func (b *Boot) defaultRouter(engine *gin.Engine, env string, port int, bootTime string, name string) {
 	engine.GET("/info", func(context *gin.Context) {
 		db := DbTx{}
 		if Services.Db().MysqlDb != nil && Services.Db().MysqlDb.Error == nil {
