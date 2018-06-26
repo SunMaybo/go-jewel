@@ -26,14 +26,20 @@ type Boot struct {
 	asyncFuns  []func()
 }
 
-func NewInstance() Boot {
-	boot := Boot{}
+var b *Boot
+
+func NewInstance() *Boot {
+	boot := &Boot{}
 	boot.cmd = Cmd{
 		Params: make(map[string]*string),
 		Cmd:    make(map[string]func(c Config)),
 	}
 	boot.inject = inject.New()
+	b = boot
 	return boot
+}
+func GetBoot() *Boot {
+	return b
 }
 func (b *Boot) GetInject() *inject.Injector {
 	return b.inject
@@ -134,7 +140,7 @@ func (b *Boot) StartAndDir(dir string) (*Boot) {
 	b.cmd.defaultCmd(func(c Config) {
 		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
 	})
-	b.cmd.StartAndDir(b,dir)
+	b.cmd.StartAndDir(b, dir)
 	return b
 }
 func (b *Boot) BindHttp(r func(engine *gin.Engine)) {
