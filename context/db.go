@@ -35,7 +35,7 @@ func (d *Db) Open(c Config) error {
 			return err
 		}
 		db.Debug()
-		//db.LogMode(true)
+		db.LogMode(true)
 		db.DB().SetMaxIdleConns(maxIdleConns)
 		db.DB().SetMaxOpenConns(maxOpenConns)
 		d.MysqlDb = db
