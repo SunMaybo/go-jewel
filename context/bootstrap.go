@@ -17,7 +17,7 @@ import (
 var methodMap jsonrpc.MethodMap
 
 type boot struct {
-	inject     inject.Injector
+	inject     *inject.Injector
 	cfgPointer []interface{}
 	injector   []interface{}
 	cmd        Cmd
@@ -35,16 +35,18 @@ func NewInstance() boot {
 	boot.inject = inject.New()
 	return boot
 }
-func (b *boot) GetInject() inject.Injector {
+func (b *boot) GetInject() *inject.Injector {
 	return b.inject
 }
 func (b *boot) GetCmd() *Cmd {
 	return &b.cmd
 }
 
-func (b *boot) AddApply(pointer ... interface{}) *boot {
-	checkPointer(pointer)
-	b.injector = append(b.injector, pointer...)
+func (b *boot) AddApply(pointers ... interface{}) *boot {
+	for e := range pointers {
+		checkPointer(pointers[e])
+	}
+	b.injector = append(b.injector, pointers...)
 	return b
 }
 func (b *boot) AddTask(name, cron string, fun func()) *boot {

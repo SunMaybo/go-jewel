@@ -56,6 +56,14 @@ func (c *Cmd) Start(b *boot) {
 	b.inject.Apply(&cfg)
 	//注册依赖
 	b.inject.Apply(b.injector...)
+	c.Cmd["default"](cfg) //默认的方法
+	if fun, ok := c.Cmd[cmd]; ok {
+		fun(cfg)
+	} else {
+		fmt.Println("cmd no found")
+	}
+	b.inject.Apply(Services.Db().MysqlDb,Services.Db().RedisDb)
+	b.inject.Inject() //依赖扫描于加载
 	for _, f := range b.asyncFuns {
 		go func() {
 			f()
@@ -72,13 +80,6 @@ func (c *Cmd) Start(b *boot) {
 		c.Start()
 
 	}
-	c.Cmd["default"](cfg) //默认的方法
-	if fun, ok := c.Cmd[cmd]; ok {
-		fun(cfg)
-	} else {
-		fmt.Println("cmd no found")
-	}
-	b.inject.Inject()  //依赖扫描于加载
 	c.Cmd["http"](cfg) //默认的方法
 
 }
