@@ -91,14 +91,14 @@ func (b *Boot) RegisterJsonRpc(name string, method interface{}) {
 
 func (b *Boot) RunJsonRpc(relativePath string, r func(engine *gin.Engine)) {
 	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
+		b.defaultService(c, c.Jewel.Profiles.Active)
 
 	})
 	b.cmd.httpCmd(func(c Config) {
 		if c.Jewel.JsonRpc.Enabled {
-			b.http(c, []func(engine *gin.Engine){b.jsonRpc(relativePath, c.Jewel.JsonRpc.UserName, c.Jewel.JsonRpc.Password), r}, c.Jewel.Profiles.Active, c.Jewel.Port)
+			b.http(c, []func(engine *gin.Engine){b.jsonRpc(relativePath, c.Jewel.JsonRpc.UserName, c.Jewel.JsonRpc.Password), r})
 		} else {
-			b.http(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
+			b.http(c, []func(engine *gin.Engine){r})
 		}
 	})
 	b.cmd.Start(b)
@@ -131,14 +131,14 @@ func (b *Boot) jsonRpc(relativePath string, username string, password string) fu
 }
 func (b *Boot) Start() (*Boot) {
 	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
+		b.defaultService(c, c.Jewel.Profiles.Active)
 	})
 	b.cmd.Start(b)
 	return b
 }
 func (b *Boot) StartAndDir(dir string) (*Boot) {
 	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, c.Jewel.Profiles.Active, c.Jewel.Port)
+		b.defaultService(c, c.Jewel.Profiles.Active)
 	})
 	b.cmd.StartAndDir(b, dir)
 	return b
@@ -146,12 +146,12 @@ func (b *Boot) StartAndDir(dir string) (*Boot) {
 func (b *Boot) BindHttp(r func(engine *gin.Engine)) {
 
 	b.cmd.httpCmd(func(c Config) {
-		b.http(c, []func(engine *gin.Engine){r}, c.Jewel.Profiles.Active, c.Jewel.Port)
+		b.http(c, []func(engine *gin.Engine){r})
 	})
 	b.cmd.Http(b)
 }
 
-func (b *Boot) defaultService(c Config, env string, port int) {
+func (b *Boot) defaultService(c Config, env string) {
 	NewLogger(c.Jewel.Log)
 	db := Db{}
 	err := db.Open(c)
@@ -162,14 +162,12 @@ func (b *Boot) defaultService(c Config, env string, port int) {
 	}
 	Services.ServiceMap[DB] = db
 }
-func (b *Boot) http(c Config, fs []func(engine *gin.Engine), env string, port int) {
-	if c.Jewel.Port > 0 {
-		engine := gin.Default()
-		b.defaultRouter(engine, env, port, time.Now().String(), c.Jewel.Name)
-		registeries(fs)
-		load(engine)
-		engine.Run(fmt.Sprintf(":%d", + c.Jewel.Port))
-	}
+func (b *Boot) http(c Config, fs []func(engine *gin.Engine)) {
+	engine := gin.Default()
+	b.defaultRouter(engine, c.Jewel.Profiles.Active, c.Jewel.Port, time.Now().String(), c.Jewel.Name)
+	registeries(fs)
+	load(engine)
+	engine.Run(fmt.Sprintf(":%d", + c.Jewel.Port))
 }
 
 type Info struct {

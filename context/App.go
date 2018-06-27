@@ -25,7 +25,9 @@ loop:
 
 	}
 	app := Config{}
-	app.Load(dir + "/" + name)
+	if name != "" {
+		app.Load(dir + "/" + name)
+	}
 	return app
 }
 func LoadCfg(dir string, inter interface{}) {
@@ -43,8 +45,10 @@ loop:
 			}
 		}
 	}
-	app := ConfigStruct{}
-	app.Load(dir+"/"+name, inter)
+	if name != "" {
+		app := ConfigStruct{}
+		app.Load(dir+"/"+name, inter)
+	}
 }
 func LoadEnvCfg(dir, env string, inter interface{}) {
 	ifs, err := ioutil.ReadDir(dir)
@@ -61,6 +65,9 @@ loop:
 			}
 		}
 	}
-	app := ConfigStruct{}
-	app.Load(dir+"/"+name, inter)
+
+	if name != "" {
+		app := ConfigStruct{}
+		app.Load(dir+"/"+name, inter)
+	}
 }
