@@ -7,7 +7,6 @@ import (
 
 func main() {
 	boot := context.NewInstance()
-	boot.Run(func(engine *gin.Engine) {
-
+	boot.Start().BindHttp(func(engine *gin.Engine) {
 	})
 }
