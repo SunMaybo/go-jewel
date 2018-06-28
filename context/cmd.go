@@ -51,18 +51,15 @@ func (c *Cmd) StartAndDir(b *Boot, dir string) {
 		LoadEnvCfg(dir, env, v)
 	}
 	LoadEnvCfg(dir, env, &cfg)
-	// 注册配置
-	b.inject.Apply(b.cfgPointer ...)
-	b.inject.Apply(&cfg)
-	//注册依赖
-	b.inject.Apply(b.injector...)
 	c.Cmd["default"](cfg) //默认的方法
 	if fun, ok := c.Cmd[cmd]; ok {
 		fun(cfg)
 	} else {
 		fmt.Println("cmd no found")
 	}
-	b.inject.Apply(Services.Db().MysqlDb, Services.Db().RedisDb)
+	b.inject.Apply(b.cfgPointer ...)
+	b.inject.Apply(&cfg)
+	b.inject.Apply(b.injector...)
 	b.inject.Inject() //依赖扫描于加载
 	fmt.Println(len(b.asyncFuns))
 	for e, _ := range b.asyncFuns {
@@ -92,9 +89,6 @@ func (c *Cmd) Start(b *Boot) {
 		fmt.Printf("env: %s\n", *c.Params["e"])
 	}
 	fmt.Printf("-------------------------------------------------------\n")
-	b.inject.Apply(b.cfgPointer ...)
-	//注册依赖
-	b.inject.Apply(b.injector...)
 	dir := getCurrentDirectory()
 	cfg := Load(dir)
 
@@ -102,7 +96,7 @@ func (c *Cmd) Start(b *Boot) {
 	if *c.Params["e"] != "" {
 		env = *c.Params["e"]
 	} else if cfg.Jewel.Profiles.Active != "" {
-		env = *c.Params["e"]
+		env = cfg.Jewel.Profiles.Active
 	} else {
 		env = "default"
 	}
@@ -119,13 +113,13 @@ func (c *Cmd) Start(b *Boot) {
 	} else if cfg.Jewel.Port <= 0 {
 		cfg.Jewel.Port = 8080
 	}
-	// 注册配置
-	b.inject.Apply(&cfg)
-
 	c.Cmd["default"](cfg) //默认的方法
 	if fun, ok := c.Cmd[cmd]; ok {
 		fun(cfg)
 	}
+	b.inject.Apply(b.cfgPointer ...)
+	b.inject.Apply(&cfg)
+	b.inject.Apply(b.injector...)
 	b.inject.Inject() //依赖扫描于加载
 	for e, _ := range b.asyncFuns {
 		go func(fun func()) {

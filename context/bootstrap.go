@@ -155,7 +155,22 @@ func (b *Boot) defaultService(c Config, env string) {
 		seelog.Error(err)
 		seelog.Flush()
 	}
-	b.AddApply(db.RedisDb, db.MysqlDb, db.PostDb, db.Sqlite3Db, db.SqlServerDb)
+	if db.RedisDb != nil {
+		b.AddApply(db.RedisDb)
+	}
+	if db.MysqlDb != nil {
+		b.AddApply(db.MysqlDb)
+	}
+	if db.PostDb != nil {
+		b.AddApply(db.PostDb)
+	}
+	if db.Sqlite3Db != nil {
+		b.AddApply(db.Sqlite3Db)
+	}
+	if db.SqlServerDb != nil {
+		b.AddApply(db.SqlServerDb)
+	}
+
 	Services.ServiceMap[DB] = db
 }
 func (b *Boot) http(c Config, fs []func(engine *gin.Engine)) {
