@@ -90,10 +90,6 @@ func (b *Boot) RegisterJsonRpc(name string, method interface{}) {
 }
 
 func (b *Boot) RunJsonRpc(relativePath string, r func(engine *gin.Engine)) {
-	b.cmd.defaultCmd(func(c Config) {
-		b.defaultService(c, c.Jewel.Profiles.Active)
-
-	})
 	b.cmd.httpCmd(func(c Config) {
 		if c.Jewel.JsonRpc.Enabled {
 			b.http(c, []func(engine *gin.Engine){b.jsonRpc(relativePath, c.Jewel.JsonRpc.UserName, c.Jewel.JsonRpc.Password), r})
@@ -101,7 +97,7 @@ func (b *Boot) RunJsonRpc(relativePath string, r func(engine *gin.Engine)) {
 			b.http(c, []func(engine *gin.Engine){r})
 		}
 	})
-	b.cmd.Start(b)
+	b.cmd.Http(b)
 
 }
 func (b *Boot) jsonRpc(relativePath string, username string, password string) func(engine *gin.Engine) {
