@@ -1,5 +1,4 @@
-## go-jewel文档描述
-
+##go-jewel文档描述
 整合优秀的开源项目，实现快速启动golangweb项目，较为轻量。
 ### 整合的开源项目
 1. 基于gorm实现关系型数据库操作
@@ -121,6 +120,15 @@ name: xiaowang
 	})
 ```
 ##  命令行工具
+
+```
+boot.GetCmd().PutFlagString("f", "./config", "open a file")
+	boot.GetCmd().PutCmd("start", func(c context.Config) {
+		fmt.Println("start ....")
+		f:=boot.GetCmd().Params["f"]
+		fmt.Println(*f)
+	})
+```
 ## 定时任务
 定时任务必须在Start()方法执行前实现，切在Start()函数执行后被启动
 
@@ -159,8 +167,25 @@ db:=context.Services.Db().RedisDb
 ## http-server
 整合[gin](https://github.com/gin-gonic/gin)，包装jsonrpc,启动服务
 
+启动http服务
+
 ```
 boot.Start().BindHttp(func(engine *gin.Engine) {
 	})
 ```
+
+启动jsonrpc服务
+
+```
+boot.JsonRpc().RegisterJsonRpc("test", func(name string, age float64, stu map[string]interface{}) string {
+		return "ok"
+	})
+	boot.Start().BindJsonRpc("/test", func(engine *gin.Engine) {
+		engine.GET("/students", func(c *gin.Context) {
+
+		})
+	})
+```
+注意: 函数的映射类型仅支持，string，float，map类型.
+
 ## 例子

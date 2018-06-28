@@ -16,7 +16,8 @@ func (methodMap MethodMap) Call(name string, params []interface{}) Response {
 		if fv.Kind() == reflect.Func {
 			values := make([]reflect.Value, len(params))
 			for k, v := range params {
-				values[k] = reflect.ValueOf(v)
+				value := reflect.ValueOf(v)
+				values[k] = value
 			}
 			response := fv.Call(values)
 			if len(response) != 2 {

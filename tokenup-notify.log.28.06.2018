@@ -1,0 +1,1 @@
+2018-06-28 16:55:30 [ERR] [bootstrap.go:156] [github.com/SunMaybo/go-jewel/context.(*Boot).defaultService] Error 1045: Access denied for user 'admin'@'localhost' (using password: YES)

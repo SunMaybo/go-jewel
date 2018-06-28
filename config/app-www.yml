@@ -2,7 +2,7 @@ jewel:
    name: tokenup-worker-www
    port: 8080
    log: ./config/log.xml
-   mysql: admin:mypass@tcp(127.0.0.1:3308)/tokenup-btcd?charset=utf8mb4,utf8&collation=utf8mb4_unicode_ci
+   mysql:
    postgres: ""
    sqlite3: ""
    redis:

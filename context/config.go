@@ -28,7 +28,7 @@ type Config struct {
 			Password string `json:"password"`
 		} `json:"redis" yaml:"redis" xml:"redis"`
 		JsonRpc struct {
-			Enabled  bool   `json:"enabled"`
+			Enabled  *bool   `json:"enabled"`
 			UserName string `json:"username"`
 			Password string `json:"password"`
 		} `json:"jsonrpc" yaml:"jsonrpc" xml:"jsonrpc"`

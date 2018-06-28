@@ -89,9 +89,9 @@ func (b *Boot) RegisterJsonRpc(name string, method interface{}) {
 	methodMap.Register(name, method)
 }
 
-func (b *Boot) RunJsonRpc(relativePath string, r func(engine *gin.Engine)) {
+func (b *Boot) BindJsonRpc(relativePath string, r func(engine *gin.Engine)) {
 	b.cmd.httpCmd(func(c Config) {
-		if c.Jewel.JsonRpc.Enabled {
+		if c.Jewel.JsonRpc.Enabled == nil || *c.Jewel.JsonRpc.Enabled {
 			b.http(c, []func(engine *gin.Engine){b.jsonRpc(relativePath, c.Jewel.JsonRpc.UserName, c.Jewel.JsonRpc.Password), r})
 		} else {
 			b.http(c, []func(engine *gin.Engine){r})
@@ -105,7 +105,7 @@ func (b *Boot) jsonRpc(relativePath string, username string, password string) fu
 		engine.POST(relativePath, func(context *gin.Context) {
 			auth := context.GetHeader("Authorization")
 			basicAuth := jsonrpc.BaseAuth(username, password)
-			if auth != basicAuth {
+			if auth != basicAuth && basicAuth != "" {
 				context.String(http.StatusUnauthorized, "authorization error")
 				return
 			}
@@ -154,8 +154,8 @@ func (b *Boot) defaultService(c Config, env string) {
 	if err != nil {
 		seelog.Error(err)
 		seelog.Flush()
-		return
 	}
+	b.AddApply(db.RedisDb, db.MysqlDb, db.PostDb, db.Sqlite3Db, db.SqlServerDb)
 	Services.ServiceMap[DB] = db
 }
 func (b *Boot) http(c Config, fs []func(engine *gin.Engine)) {

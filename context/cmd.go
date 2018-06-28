@@ -126,7 +126,6 @@ func (c *Cmd) Start(b *Boot) {
 	if fun, ok := c.Cmd[cmd]; ok {
 		fun(cfg)
 	}
-	b.inject.Apply(Services.Db().MysqlDb, Services.Db().RedisDb)
 	b.inject.Inject() //依赖扫描于加载
 	for e, _ := range b.asyncFuns {
 		go func(fun func()) {
