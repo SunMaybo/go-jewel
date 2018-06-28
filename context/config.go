@@ -11,28 +11,29 @@ import (
 
 type Config struct {
 	Jewel struct {
-		Log            string `json:"log"`
-		Max_Open_conns int    `json:"max-Open-conns"`
-		Max_idle_conns int    `json:"max-idle-conns"`
-		Mysql          string `json:"mysql"`
-		Name           string `json:"name"`
-		Port           int    `json:"port"`
-		Postgres       string `json:"postgres"`
+		Log            string `json:"log" yaml:"log"`
+		Max_Open_Conns int    `json:"max-open-conns" yaml:"max-open-conns"`
+		Max_Idle_Conns int    `json:"max-idle-conns" yaml:"max-idle-conns" xml:"max-idle-conns"`
+		SqlShow        bool   `json:"sql_show" yaml:"sql_show" xml:"sql_show"`
+		Mysql          string `json:"mysql" yaml:"mysql" xml:"mysql"`
+		Name           string `json:"name" yaml:"name" xml:"name"`
+		Port           int    `json:"port" yaml:"port" xml:"port"`
+		Postgres       string `json:"postgres" yaml:"postgres" xml:"postgres"`
 		Profiles struct {
 			Active string `json:"active"`
-		} `json:"profiles"`
+		} `json:"profiles" yaml:"profiles" xml:"profiles"`
 		Redis struct {
 			Db       int    `json:"db"`
 			Host     string `json:"host"`
 			Password string `json:"password"`
-		} `json:"redis"`
+		} `json:"redis" yaml:"redis" xml:"redis"`
 		JsonRpc struct {
-			Enabled  bool   `json:"enabled"`
+			Enabled  *bool   `json:"enabled"`
 			UserName string `json:"username"`
 			Password string `json:"password"`
-		} `json:"jsonrpc"`
-		Sqlite3 string `json:"sqlite3"`
-	} `json:"jewel"`
+		} `json:"jsonrpc" yaml:"jsonrpc" xml:"jsonrpc"`
+		Sqlite3 string `json:"sqlite3" yaml:"sqlite3" xml:"sqlite3"`
+	} `json:"jewel" yaml:"jewel" xml:"jewel"`
 }
 
 func (config *Config) Load(fileName string) {
@@ -77,45 +78,46 @@ func (config *Config) loadJson(fileName string) {
 	}
 }
 
-type ConfigMap map[interface{}]interface{}
+type ConfigStruct struct {
+}
 
-func (config *ConfigMap) Load(fileName string) {
+func (config *ConfigStruct) Load(fileName string, inter interface{}) {
 	if strings.HasSuffix(fileName, ".yaml") || strings.HasSuffix(fileName, ".yml") {
-		config.loadYml(fileName)
+		config.loadYml(fileName, inter)
 	} else if strings.HasSuffix(fileName, ".xml") {
-		config.loadXml(fileName)
+		config.loadXml(fileName, inter)
 	} else {
-		config.loadJson(fileName)
+		config.loadJson(fileName, inter)
 	}
 }
 
-func (config *ConfigMap) loadYml(fileName string) {
+func (config *ConfigStruct) loadYml(fileName string, inter interface{}) {
 	buff, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	err = yaml.Unmarshal(buff, config)
+	err = yaml.Unmarshal(buff, inter)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 }
-func (config *ConfigMap) loadXml(fileName string) {
+func (config *ConfigStruct) loadXml(fileName string, inter interface{}) {
 	buff, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	xml.Unmarshal(buff, config)
+	err = xml.Unmarshal(buff, &inter)
 	if err != nil {
 		log.Fatalln(err)
 	}
 }
-func (config *ConfigMap) loadJson(fileName string) {
+func (config *ConfigStruct) loadJson(fileName string, inter interface{}) {
 	buff, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	json.Unmarshal(buff, config)
+	err = json.Unmarshal(buff, &inter)
 	if err != nil {
 		log.Fatalln(err)
 	}

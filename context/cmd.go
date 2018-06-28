@@ -5,13 +5,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/robfig/cron"
+	"strconv"
 )
 
 type Cmd struct {
-	Params       map[string]*string
-	Cmd          map[string]func(c Config)
-	Extends      func(cfgMap ConfigMap)
-	AsyncMethods map[string][]func(c Config, cfgMap ConfigMap)
+	Params map[string]*string
+	Cmd    map[string]func(c Config)
 }
 
 func (c *Cmd) Load() error {
@@ -25,34 +25,17 @@ func (c *Cmd) PutFlagString(name string, value string, usage string) {
 	c.Params[name] = e
 }
 
-/*func (c *Cmd) PutFlagInt(name string, value int, usage string) {
-	e := flag.Int(name, value, usage)
-	c.Params[name] = &string(*e)
-}
-func (c *Cmd) PutFlagDuration(name string, value time.Duration, usage string) {
-	e := flag.Duration(name, value, usage)
-	c.Params[name] = &string(*e)
-}*/
-/*func (c *Cmd) PutFlagFloat64(name string, value float64, usage string) {
-	e := flag.Float64(name, value, usage)
-	c.Params[name] = &strconv.FormatFloat(*e, 'E', -1, 64)
-}*/
 func (c *Cmd) PutCmd(name string, fun func(c Config)) {
 	c.Cmd[name] = fun
 }
-func (c *Cmd) putExtend(fun func(cfgMap ConfigMap)) {
-	c.Extends = fun
-}
-
 func (c *Cmd) defaultCmd(fun func(c Config)) {
 	c.Cmd["default"] = fun
 }
 func (c *Cmd) httpCmd(fun func(c Config)) {
 	c.Cmd["http"] = fun
 }
-func (c *Cmd) Start() {
-	c.PutFlagString("e", "www", "startup environment")
-	c.PutFlagString("f", "./config", "startup config")
+func (c *Cmd) StartAndDir(b *Boot, dir string) {
+	c.PutFlagString("e", "", "startup environment")
 	flag.Parse()
 	cmd := flag.Arg(0)
 	if cmd != "" {
@@ -61,60 +44,107 @@ func (c *Cmd) Start() {
 	}
 
 	fmt.Printf("-------------------------------------------------------\n")
-	cfg := Load(*c.Params["f"], *c.Params["e"])
-	if fun, ok := c.Cmd["extend"]; ok {
-		fun(cfg)
+	cfg := Load(dir)
+	env := cfg.Jewel.Profiles.Active
+	for _, v := range b.cfgPointer {
+		LoadCfg(dir, v)
+		LoadEnvCfg(dir, env, v)
 	}
-	cfgMap := LoadMap(*c.Params["f"], *c.Params["e"])
-	if c.Extends != nil {
-		c.Extends(cfgMap)
-	}
+	LoadEnvCfg(dir, env, &cfg)
+	// 注册配置
+	b.inject.Apply(b.cfgPointer ...)
+	b.inject.Apply(&cfg)
+	//注册依赖
+	b.inject.Apply(b.injector...)
 	c.Cmd["default"](cfg) //默认的方法
 	if fun, ok := c.Cmd[cmd]; ok {
 		fun(cfg)
 	} else {
 		fmt.Println("cmd no found")
 	}
-	mtdAfts := c.AsyncMethods["afters"]
-	go func() {
-		for _, mtd := range mtdAfts {
-			mtd(cfg, cfgMap)
-		}
-	}()
-	c.Cmd["http"](cfg) //默认的方法
+	b.inject.Apply(Services.Db().MysqlDb, Services.Db().RedisDb)
+	b.inject.Inject() //依赖扫描于加载
+	fmt.Println(len(b.asyncFuns))
+	for e, _ := range b.asyncFuns {
+		go func(fun func()) {
+			fun()
+		}(b.asyncFuns[e])
+	}
+	for _, f := range b.funs {
+		f()
+	}
+	for _, task := range b.taskfun {
+		c := cron.New()
+		c.AddFunc(task.Cron, func() {
+			task.Fun()
+		})
+		c.Start()
+	}
 
 }
-func (c *Cmd) StartConfig(cfg Config) {
-	if fun, ok := c.Cmd["extend"]; ok {
+func (c *Cmd) Start(b *Boot) {
+	c.PutFlagString("e", "", "startup environment")
+	c.PutFlagString("p", "", "startup port")
+	flag.Parse()
+	cmd := flag.Arg(0)
+	if cmd != "" {
+		fmt.Printf("action: %s\n", cmd)
+		fmt.Printf("env: %s\n", *c.Params["e"])
+	}
+	fmt.Printf("-------------------------------------------------------\n")
+	b.inject.Apply(b.cfgPointer ...)
+	//注册依赖
+	b.inject.Apply(b.injector...)
+	dir := getCurrentDirectory()
+	cfg := Load(dir)
+
+	var env string
+	if *c.Params["e"] != "" {
+		env = *c.Params["e"]
+	} else if cfg.Jewel.Profiles.Active != "" {
+		env = *c.Params["e"]
+	} else {
+		env = "default"
+	}
+
+	for _, v := range b.cfgPointer {
+		LoadCfg(dir, v)
+		LoadEnvCfg(dir, env, v)
+	}
+	LoadEnvCfg(dir, env, &cfg)
+
+	cfg.Jewel.Profiles.Active = env
+	if *c.Params["p"] != "" {
+		cfg.Jewel.Port, _ = strconv.Atoi(*c.Params["p"])
+	} else if cfg.Jewel.Port <= 0 {
+		cfg.Jewel.Port = 8080
+	}
+	// 注册配置
+	b.inject.Apply(&cfg)
+
+	c.Cmd["default"](cfg) //默认的方法
+	if fun, ok := c.Cmd[cmd]; ok {
 		fun(cfg)
 	}
-	c.Cmd["default"](cfg) //默认的方法
-	mtdAfts := c.AsyncMethods["afters"]
-	go func() {
-		for _, mtd := range mtdAfts {
-			mtd(cfg, nil)
-		}
-	}()
+	b.inject.Inject() //依赖扫描于加载
+	for e, _ := range b.asyncFuns {
+		go func(fun func()) {
+			fun()
+		}(b.asyncFuns[e])
+	}
+	for _, f := range b.funs {
+		f()
+	}
+	for _, task := range b.taskfun {
+		c := cron.New()
+		c.AddFunc(task.Cron, func() {
+			task.Fun()
+		})
+		c.Start()
+	}
 
 }
-func (c *Cmd) StartConfigDir(dir string, env string) {
-
-	cfg := Load(dir, env)
-	c.Cmd["default"](cfg) //默认的方法
-
-	if fun, ok := c.Cmd["extend"]; ok {
-		fun(cfg)
-	}
-	cfgMap := LoadMap(dir, env)
-	if c.Extends != nil {
-		c.Extends(cfgMap)
-	}
-
-	mtdAfts := c.AsyncMethods["afters"]
-	go func() {
-		for _, mtd := range mtdAfts {
-			mtd(cfg, cfgMap)
-		}
-	}()
+func (c *Cmd) Http(b *Boot) () {
+	cfg := b.inject.Service(&Config{}).(Config)
 	c.Cmd["http"](cfg) //默认的方法
 }
