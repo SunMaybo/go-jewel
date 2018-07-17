@@ -8,6 +8,8 @@ import (
 	//_ "github.com/jinzhu/gorm/dialects/mssql"
 	"github.com/go-redis/redis"
 	"github.com/cihub/seelog"
+	"github.com/streadway/amqp"
+	"log"
 )
 
 type Db struct {
@@ -16,6 +18,7 @@ type Db struct {
 	SqlServerDb *gorm.DB
 	Sqlite3Db   *gorm.DB
 	RedisDb     *redis.Client
+	AmqpConnect *amqp.Connection
 }
 
 func (d *Db) Open(c Config) error {
@@ -81,6 +84,14 @@ func (d *Db) Open(c Config) error {
 		seelog.Info("redis ping result:" + pong)
 		seelog.Info("db connection success")
 	}
+	amqpConfig := c.Jewel.Amqp
+	if amqpConfig != "" {
+		conn, err := amqp.Dial(amqpConfig)
+		if err != nil {
+			log.Fatal(err)
+		}
+		d.AmqpConnect = conn
+	}
 	return nil
 }
 
@@ -96,5 +107,8 @@ func (d *Db) Close() {
 	}
 	if d.RedisDb != nil {
 		d.RedisDb.Close()
+	}
+	if d.AmqpConnect != nil {
+		d.AmqpConnect.Close()
 	}
 }

@@ -170,6 +170,9 @@ func (b *Boot) defaultService(c Config, env string) {
 	if db.SqlServerDb != nil {
 		b.AddApply(db.SqlServerDb)
 	}
+	if db.AmqpConnect != nil {
+		b.AddApply(db.AmqpConnect)
+	}
 
 	Services.ServiceMap[DB] = db
 }

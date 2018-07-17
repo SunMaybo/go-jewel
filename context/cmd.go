@@ -140,5 +140,5 @@ func (c *Cmd) Start(b *Boot) {
 }
 func (c *Cmd) Http(b *Boot) () {
 	cfg := b.inject.Service(&Config{}).(Config)
-	c.Cmd["http"](cfg) //默认的方法
+	c.Cmd["http"](cfg)  //默认的方法
 }

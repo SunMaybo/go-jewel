@@ -19,6 +19,7 @@ type Config struct {
 		Name           string `json:"name" yaml:"name" xml:"name"`
 		Port           int    `json:"port" yaml:"port" xml:"port"`
 		Postgres       string `json:"postgres" yaml:"postgres" xml:"postgres"`
+		Amqp           string `json:"amqp" yaml:"amqp" xml"amqp"`
 		Profiles struct {
 			Active string `json:"active"`
 		} `json:"profiles" yaml:"profiles" xml:"profiles"`
@@ -28,7 +29,7 @@ type Config struct {
 			Password string `json:"password"`
 		} `json:"redis" yaml:"redis" xml:"redis"`
 		JsonRpc struct {
-			Enabled  *bool   `json:"enabled"`
+			Enabled  *bool  `json:"enabled"`
 			UserName string `json:"username"`
 			Password string `json:"password"`
 		} `json:"jsonrpc" yaml:"jsonrpc" xml:"jsonrpc"`
