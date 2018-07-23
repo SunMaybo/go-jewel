@@ -1,18 +1,25 @@
-package: go-jewel
+package: github.com/SunMaybo/go-jewel
 import:
-- package: github.com/SunMaybo/go-jewel
+- package: github.com/SunMaybo/jewel-inject
   subpackages:
-  - context
-  - jsonrpc
+  - inject
+- package: github.com/alecthomas/kingpin
+  version: ~2.2.6
 - package: github.com/cihub/seelog
-  version: v2.6
+  version: ~2.6.0
 - package: github.com/gin-gonic/gin
-  version: v1.2
+  version: ~1.2.0
 - package: github.com/go-redis/redis
-  version: v6.12.0
+  version: ~6.13.0
 - package: github.com/jinzhu/gorm
-  version: v1.9.1
+  version: ~1.9.1
   subpackages:
+  - dialects/mssql
   - dialects/mysql
+  - dialects/postgres
+  - dialects/sqlite
+- package: github.com/robfig/cron
+  version: ~1.1.0
+- package: github.com/streadway/amqp
 - package: gopkg.in/yaml.v2
-  version: v2.2.1
+  version: ~2.2.1

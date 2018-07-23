@@ -11,15 +11,17 @@ import (
 
 type Config struct {
 	Jewel struct {
-		Log            string `json:"log" yaml:"log"`
-		Max_Open_Conns int    `json:"max-open-conns" yaml:"max-open-conns"`
-		Max_Idle_Conns int    `json:"max-idle-conns" yaml:"max-idle-conns" xml:"max-idle-conns"`
-		SqlShow        bool   `json:"sql_show" yaml:"sql_show" xml:"sql_show"`
-		Mysql          string `json:"mysql" yaml:"mysql" xml:"mysql"`
-		Name           string `json:"name" yaml:"name" xml:"name"`
-		Port           int    `json:"port" yaml:"port" xml:"port"`
-		Postgres       string `json:"postgres" yaml:"postgres" xml:"postgres"`
-		Amqp           string `json:"amqp" yaml:"amqp" xml"amqp"`
+		Log              string `json:"log" yaml:"log"`
+		Max_Open_Conns   int    `json:"max-open-conns" yaml:"max-open-conns"`
+		Max_Idle_Conns   int    `json:"max-idle-conns" yaml:"max-idle-conns" xml:"max-idle-conns"`
+		SqlShow          bool   `json:"sql_show" yaml:"sql_show" xml:"sql_show"`
+		Mysql            string `json:"mysql" yaml:"mysql" xml:"mysql"`
+		Name             string `json:"name" yaml:"name" xml:"name"`
+		Port             int    `json:"port" yaml:"port" xml:"port"`
+		Postgres         string `json:"postgres" yaml:"postgres" xml:"postgres"`
+		Amqp             string `json:"amqp" yaml:"amqp" xml:"amqp"`
+		Amqp_Max_Channel int    `json:"amqp_max_channel" yaml:"amqp_max_channel" xml:"amqp_max_channel"`
+		Amqp_Vhost   string `json:"amqp_vhost" yaml:"amqp_vhost" xml:"amqp_vhost"`
 		Profiles struct {
 			Active string `json:"active"`
 		} `json:"profiles" yaml:"profiles" xml:"profiles"`

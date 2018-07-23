@@ -5,14 +5,6 @@ import (
 	"fmt"
 )
 
-func TestConfig(t *testing.T) {
-	app := ConfigMap{}
-	app.Load("./app-www.yml")
-	for _, v := range app {
-		fmt.Println(v)
-	}
-
-}
 func TestApp(t *testing.T) {
 	app := Load("./")
 	fmt.Println(app)

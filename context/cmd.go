@@ -35,6 +35,18 @@ func (c *Cmd) httpCmd(fun func(c Config)) {
 	c.Cmd["http"] = fun
 }
 func (c *Cmd) StartAndDir(b *Boot, dir string) {
+	fmt.Println("                                                                      /$$")
+	fmt.Println("                                                                      | $$")
+	fmt.Println("      /$$$$$$   /$$$$$$          /$$  /$$$$$$  /$$  /$$  /$$  /$$$$$$ | $$")
+	fmt.Println("     /$$__  $$ /$$__  $$ /$$$$$$|__/ /$$__  $$| $$ | $$ | $$ /$$__  $$| $$")
+	fmt.Println("	| $$  \\ $$| $$  \\ $$|______/ /$$| $$$$$$$$| $$ | $$ | $$| $$$$$$$$| $$")
+	fmt.Println("	| $$  | $$| $$  | $$        | $$| $$_____/| $$ | $$ | $$| $$_____/| $$")
+	fmt.Println("	|  $$$$$$$|  $$$$$$/        | $$|  $$$$$$$|  $$$$$/$$$$/|  $$$$$$$| $$")
+	fmt.Println("	\\____  $$ \\______/         | $$ \\_______/ \\_____/\\___/  \\_______/|__/")
+	fmt.Println("	/$$  \\ $$             /$$  | $$")
+	fmt.Println("	|  $$$$$$/            |  $$$$$$/")
+	fmt.Println("	\\______/              \\______/")
+	fmt.Println("    ::  go-jewel  ::  (V2.0.0)")
 	c.PutFlagString("e", "", "startup environment")
 	flag.Parse()
 	cmd := flag.Arg(0)
@@ -43,7 +55,6 @@ func (c *Cmd) StartAndDir(b *Boot, dir string) {
 		fmt.Printf("env: %s\n", *c.Params["e"])
 	}
 
-	fmt.Printf("-------------------------------------------------------\n")
 	cfg := Load(dir)
 	env := cfg.Jewel.Profiles.Active
 	for _, v := range b.cfgPointer {
@@ -80,6 +91,18 @@ func (c *Cmd) StartAndDir(b *Boot, dir string) {
 
 }
 func (c *Cmd) Start(b *Boot) {
+	fmt.Println("                                                                      /$$")
+	fmt.Println("                                                                      | $$")
+	fmt.Println("      /$$$$$$   /$$$$$$          /$$  /$$$$$$  /$$  /$$  /$$  /$$$$$$ | $$")
+	fmt.Println("     /$$__  $$ /$$__  $$ /$$$$$$|__/ /$$__  $$| $$ | $$ | $$ /$$__  $$| $$")
+	fmt.Println("	| $$  \\ $$| $$  \\ $$|______/ /$$| $$$$$$$$| $$ | $$ | $$| $$$$$$$$| $$")
+	fmt.Println("	| $$  | $$| $$  | $$        | $$| $$_____/| $$ | $$ | $$| $$_____/| $$")
+	fmt.Println("	|  $$$$$$$|  $$$$$$/        | $$|  $$$$$$$|  $$$$$/$$$$/|  $$$$$$$| $$")
+	fmt.Println("	\\____  $$ \\______/         | $$ \\_______/ \\_____/\\___/  \\_______/|__/")
+	fmt.Println("	/$$  \\ $$             /$$  | $$")
+	fmt.Println("	|  $$$$$$/            |  $$$$$$/")
+	fmt.Println("	\\______/              \\______/")
+	fmt.Println("    ::  go-jewel  ::  (V2.0.0)")
 	c.PutFlagString("e", "", "startup environment")
 	c.PutFlagString("p", "", "startup port")
 	flag.Parse()
@@ -88,7 +111,6 @@ func (c *Cmd) Start(b *Boot) {
 		fmt.Printf("action: %s\n", cmd)
 		fmt.Printf("env: %s\n", *c.Params["e"])
 	}
-	fmt.Printf("-------------------------------------------------------\n")
 	dir := getCurrentDirectory()
 	cfg := Load(dir)
 
@@ -113,6 +135,13 @@ func (c *Cmd) Start(b *Boot) {
 	} else if cfg.Jewel.Port <= 0 {
 		cfg.Jewel.Port = 8080
 	}
+	fmt.Println("   --------------------------------")
+	fmt.Println("   --------------------------------")
+	fmt.Printf("    ||project:  %s    ||\n",cfg.Jewel.Name)
+	fmt.Printf("  ||environment:  %s    ||\n",cfg.Jewel.Profiles.Active)
+	fmt.Printf("       ||port:  %d    ||\n",cfg.Jewel.Port)
+	fmt.Println("   --------------------------------")
+	fmt.Println("   --------------------------------")
 	c.Cmd["default"](cfg) //默认的方法
 	if fun, ok := c.Cmd[cmd]; ok {
 		fun(cfg)
@@ -140,5 +169,5 @@ func (c *Cmd) Start(b *Boot) {
 }
 func (c *Cmd) Http(b *Boot) () {
 	cfg := b.inject.Service(&Config{}).(Config)
-	c.Cmd["http"](cfg)  //默认的方法
+	c.Cmd["http"](cfg) //默认的方法
 }

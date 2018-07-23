@@ -10,7 +10,6 @@ import (
 	"github.com/cihub/seelog"
 	"github.com/streadway/amqp"
 	"os"
-
 )
 
 type Db struct {
@@ -41,7 +40,6 @@ func (d *Db) Open(c Config) error {
 			os.Exit(-1)
 			return err
 		}
-		db.Debug()
 		db.LogMode(c.Jewel.SqlShow)
 		db.DB().SetMaxIdleConns(maxIdleConns)
 		db.DB().SetMaxOpenConns(maxOpenConns)
@@ -99,7 +97,17 @@ func (d *Db) Open(c Config) error {
 	}
 	amqpConfig := c.Jewel.Amqp
 	if amqpConfig != "" {
-		conn, err := amqp.Dial(amqpConfig)
+		if c.Jewel.Amqp_Vhost == "" {
+			c.Jewel.Amqp_Vhost = "/"
+		}
+		if c.Jewel.Amqp_Max_Channel <= 0 {
+			c.Jewel.Amqp_Max_Channel = 10
+		}
+		amqpCfg := amqp.Config{
+			Vhost:      c.Jewel.Amqp_Vhost,
+			ChannelMax: c.Jewel.Amqp_Max_Channel,
+		}
+		conn, err := amqp.DialConfig(amqpConfig, amqpCfg)
 		if err != nil {
 			seelog.Error("amqp connection failed......")
 			seelog.Flush()

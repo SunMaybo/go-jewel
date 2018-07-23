@@ -177,6 +177,7 @@ func (b *Boot) defaultService(c Config, env string) {
 	Services.ServiceMap[DB] = db
 }
 func (b *Boot) http(c Config, fs []func(engine *gin.Engine)) {
+	gin.SetMode(gin.ReleaseMode)
 	engine := gin.Default()
 	b.defaultRouter(engine, c.Jewel.Profiles.Active, c.Jewel.Port, time.Now().String(), c.Jewel.Name)
 	registeries(fs)
