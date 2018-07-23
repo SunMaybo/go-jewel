@@ -9,7 +9,8 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/cihub/seelog"
 	"github.com/streadway/amqp"
-	"log"
+	"os"
+
 )
 
 type Db struct {
@@ -35,6 +36,9 @@ func (d *Db) Open(c Config) error {
 	if mysql != "" {
 		db, err := gorm.Open("mysql", mysql)
 		if err != nil {
+			seelog.Error("mysql connection failed......")
+			seelog.Flush()
+			os.Exit(-1)
 			return err
 		}
 		db.Debug()
@@ -42,7 +46,7 @@ func (d *Db) Open(c Config) error {
 		db.DB().SetMaxIdleConns(maxIdleConns)
 		db.DB().SetMaxOpenConns(maxOpenConns)
 		d.MysqlDb = db
-		seelog.Info("db connection success")
+		seelog.Info("mysql connection success......")
 	}
 	//postgres
 
@@ -50,24 +54,30 @@ func (d *Db) Open(c Config) error {
 	if postgres != "" {
 		db, err := gorm.Open("postgres", postgres)
 		if err != nil {
+			seelog.Error("postgres connection failed......")
+			seelog.Flush()
+			os.Exit(-1)
 			return err
 		}
 		db.DB().SetMaxIdleConns(maxIdleConns)
 		db.DB().SetMaxOpenConns(maxOpenConns)
 		d.PostDb = db
-		seelog.Info("db connection success")
+		seelog.Info("postgres connection success......")
 	}
 	//sqlite3
 	sqlite3 := c.Jewel.Sqlite3
 	if sqlite3 != "" {
 		db, err := gorm.Open("sqlite3", sqlite3)
 		if err != nil {
+			seelog.Error("sqlite3 connection failed......")
+			seelog.Flush()
+			os.Exit(-1)
 			return err
 		}
 		db.DB().SetMaxIdleConns(maxIdleConns)
 		db.DB().SetMaxOpenConns(maxOpenConns)
 		d.Sqlite3Db = db
-		seelog.Info("db connection success")
+		seelog.Info("sqlite3 connection success......")
 	}
 	//redis
 	redisConfig := c.Jewel.Redis
@@ -79,18 +89,25 @@ func (d *Db) Open(c Config) error {
 		})
 		pong, err := d.RedisDb.Ping().Result()
 		if err != nil {
+			seelog.Error("redis connection failed......")
+			seelog.Flush()
+			os.Exit(-1)
 			return err
 		}
-		seelog.Info("redis ping result:" + pong)
-		seelog.Info("db connection success")
+		seelog.Info("redis ping result:" + pong + "......")
+		seelog.Info("redis connection success......")
 	}
 	amqpConfig := c.Jewel.Amqp
 	if amqpConfig != "" {
 		conn, err := amqp.Dial(amqpConfig)
 		if err != nil {
-			log.Fatal(err)
+			seelog.Error("amqp connection failed......")
+			seelog.Flush()
+			os.Exit(-1)
+			return err
 		}
 		d.AmqpConnect = conn
+		seelog.Info("amqp connection success......")
 	}
 	return nil
 }
