@@ -62,6 +62,11 @@ func (c *Cmd) StartAndDir(b *Boot, dir string) {
 		LoadEnvCfg(dir, env, v)
 	}
 	LoadEnvCfg(dir, env, &cfg)
+	fmt.Println("=============================================================")
+	fmt.Printf("             project:  %s                        \n",cfg.Jewel.Name)
+	fmt.Printf("         environment:  %s                    \n",cfg.Jewel.Profiles.Active)
+	fmt.Printf("                port:  %d                           \n",cfg.Jewel.Port)
+	fmt.Println("=============================================================")
 	c.Cmd["default"](cfg) //默认的方法
 	if fun, ok := c.Cmd[cmd]; ok {
 		fun(cfg)
@@ -135,13 +140,11 @@ func (c *Cmd) Start(b *Boot) {
 	} else if cfg.Jewel.Port <= 0 {
 		cfg.Jewel.Port = 8080
 	}
-	fmt.Println("   --------------------------------")
-	fmt.Println("   --------------------------------")
-	fmt.Printf("    ||project:  %s    ||\n",cfg.Jewel.Name)
-	fmt.Printf("  ||environment:  %s    ||\n",cfg.Jewel.Profiles.Active)
-	fmt.Printf("       ||port:  %d    ||\n",cfg.Jewel.Port)
-	fmt.Println("   --------------------------------")
-	fmt.Println("   --------------------------------")
+	fmt.Println("=============================================================")
+	fmt.Printf("             project:  %s                        \n",cfg.Jewel.Name)
+	fmt.Printf("         environment:  %s                    \n",cfg.Jewel.Profiles.Active)
+	fmt.Printf("                port:  %d                           \n",cfg.Jewel.Port)
+	fmt.Println("=============================================================")
 	c.Cmd["default"](cfg) //默认的方法
 	if fun, ok := c.Cmd[cmd]; ok {
 		fun(cfg)
