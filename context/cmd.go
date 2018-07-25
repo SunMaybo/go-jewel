@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/robfig/cron"
 	"strconv"
 )
 
@@ -63,9 +62,9 @@ func (c *Cmd) StartAndDir(b *Boot, dir string) {
 	}
 	LoadEnvCfg(dir, env, &cfg)
 	fmt.Println("=============================================================")
-	fmt.Printf("             project:  %s                        \n",cfg.Jewel.Name)
-	fmt.Printf("         environment:  %s                    \n",cfg.Jewel.Profiles.Active)
-	fmt.Printf("                port:  %d                           \n",cfg.Jewel.Port)
+	fmt.Printf("             project:  %s                        \n", cfg.Jewel.Name)
+	fmt.Printf("         environment:  %s                    \n", cfg.Jewel.Profiles.Active)
+	fmt.Printf("                port:  %d                           \n", cfg.Jewel.Port)
 	fmt.Println("=============================================================")
 	c.Cmd["default"](cfg) //默认的方法
 	if fun, ok := c.Cmd[cmd]; ok {
@@ -86,14 +85,6 @@ func (c *Cmd) StartAndDir(b *Boot, dir string) {
 	for _, f := range b.funs {
 		f()
 	}
-	for _, task := range b.taskfun {
-		c := cron.New()
-		c.AddFunc(task.Cron, func() {
-			task.Fun()
-		})
-		c.Start()
-	}
-
 }
 func (c *Cmd) Start(b *Boot) {
 	fmt.Println("                                                                          /$$")
@@ -141,9 +132,9 @@ func (c *Cmd) Start(b *Boot) {
 		cfg.Jewel.Port = 8080
 	}
 	fmt.Println("=============================================================")
-	fmt.Printf("             project:  %s                        \n",cfg.Jewel.Name)
-	fmt.Printf("         environment:  %s                    \n",cfg.Jewel.Profiles.Active)
-	fmt.Printf("                port:  %d                           \n",cfg.Jewel.Port)
+	fmt.Printf("             project:  %s                        \n", cfg.Jewel.Name)
+	fmt.Printf("         environment:  %s                    \n", cfg.Jewel.Profiles.Active)
+	fmt.Printf("                port:  %d                           \n", cfg.Jewel.Port)
 	fmt.Println("=============================================================")
 	c.Cmd["default"](cfg) //默认的方法
 	if fun, ok := c.Cmd[cmd]; ok {
@@ -161,14 +152,6 @@ func (c *Cmd) Start(b *Boot) {
 	for _, f := range b.funs {
 		f()
 	}
-	for _, task := range b.taskfun {
-		c := cron.New()
-		c.AddFunc(task.Cron, func() {
-			task.Fun()
-		})
-		c.Start()
-	}
-
 }
 func (c *Cmd) Http(b *Boot) () {
 	cfg := b.inject.Service(&Config{}).(Config)

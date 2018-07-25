@@ -12,6 +12,7 @@ import (
 	"github.com/SunMaybo/jewel-inject/inject"
 	"reflect"
 	"log"
+	"github.com/robfig/cron"
 )
 
 var methodMap jsonrpc.MethodMap
@@ -21,15 +22,19 @@ type Boot struct {
 	cfgPointer []interface{}
 	injector   []interface{}
 	cmd        Cmd
-	taskfun    []Cron
 	funs       []func()
 	asyncFuns  []func()
+	Cron       *cron.Cron
 }
 
 var b *Boot
 
 func NewInstance() *Boot {
-	boot := &Boot{}
+	cron := cron.New()
+	cron.Start()
+	boot := &Boot{
+		Cron: cron,
+	}
 	boot.cmd = Cmd{
 		Params: make(map[string]*string),
 		Cmd:    make(map[string]func(c Config)),
@@ -56,7 +61,7 @@ func (b *Boot) AddApply(pointers ... interface{}) *Boot {
 	return b
 }
 func (b *Boot) AddTask(name, cron string, fun func()) *Boot {
-	b.taskfun = append(b.taskfun, Cron{Name: name, Cron: cron, Fun: fun})
+	b.Cron.AddFunc(cron, fun)
 	return b
 }
 func (b *Boot) AddFun(fun func()) *Boot {
