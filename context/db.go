@@ -19,6 +19,7 @@ type Db struct {
 	Sqlite3Db   *gorm.DB
 	RedisDb     *redis.Client
 	AmqpConnect *amqp.Connection
+	MgoDb       *mgo.Session
 }
 
 func (d *Db) Open(c Config) error {
