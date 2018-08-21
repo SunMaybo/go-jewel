@@ -10,6 +10,7 @@ import (
 	"github.com/cihub/seelog"
 	"github.com/streadway/amqp"
 	"os"
+	"github.com/mgo"
 )
 
 type Db struct {
@@ -19,12 +20,13 @@ type Db struct {
 	Sqlite3Db   *gorm.DB
 	RedisDb     *redis.Client
 	AmqpConnect *amqp.Connection
-	MgoDb       *mgo.Session
+	MgoDb       *mgo.Database
 }
 
 func (d *Db) Open(c Config) error {
 	//mysql
 	mysql := c.Jewel.Mysql
+	mgoUrl := c.Jewel.Mgo
 	maxIdleConns := c.Jewel.Max_Idle_Conns
 	maxOpenConns := c.Jewel.Max_Open_Conns
 	if maxIdleConns == 0 {
@@ -46,6 +48,19 @@ func (d *Db) Open(c Config) error {
 		db.DB().SetMaxOpenConns(maxOpenConns)
 		d.MysqlDb = db
 		seelog.Info("mysql connection success......")
+	}
+	if mgoUrl != "" {
+		db, err := mgo.Dial(mgoUrl)
+		if err != nil {
+			seelog.Error("mgo connection failed......")
+			seelog.Flush()
+			os.Exit(-1)
+			return err
+		}
+
+		d.MgoDb = db
+		d.MgoDb.SetMode(mgo.Monotonic, true)
+		seelog.Info("mgo connection success......")
 	}
 	//postgres
 
