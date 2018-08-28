@@ -17,7 +17,7 @@ type Config struct {
 		SqlShow          bool   `json:"sql_show" yaml:"sql_show" xml:"sql_show"`
 		Mysql            string `json:"mysql" yaml:"mysql" xml:"mysql"`
 		Mgo              string `json:"mgo" yaml:"mgo" xml:"mgo"`
-		MgoDb            string `json:"mgo_" yaml:"mgo" xml:"mgo"`
+		MgoDb            string `json:"mgo_db" yaml:"mgo_db" xml:"mgo_db"`
 		Name             string `json:"name" yaml:"name" xml:"name"`
 		Port             int    `json:"port" yaml:"port" xml:"port"`
 		Postgres         string `json:"postgres" yaml:"postgres" xml:"postgres"`

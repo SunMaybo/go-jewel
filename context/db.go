@@ -10,7 +10,7 @@ import (
 	"github.com/cihub/seelog"
 	"github.com/streadway/amqp"
 	"os"
-	"github.com/mgo"
+	"gopkg.in/mgo.v2"
 )
 
 type Db struct {
@@ -27,6 +27,7 @@ func (d *Db) Open(c Config) error {
 	//mysql
 	mysql := c.Jewel.Mysql
 	mgoUrl := c.Jewel.Mgo
+	mgoDb := c.Jewel.MgoDb
 	maxIdleConns := c.Jewel.Max_Idle_Conns
 	maxOpenConns := c.Jewel.Max_Open_Conns
 	if maxIdleConns == 0 {
@@ -57,9 +58,8 @@ func (d *Db) Open(c Config) error {
 			os.Exit(-1)
 			return err
 		}
-
-		d.MgoDb = db
-		d.MgoDb.SetMode(mgo.Monotonic, true)
+		db.SetMode(mgo.Monotonic, true)
+		d.MgoDb = db.DB(mgoDb)
 		seelog.Info("mgo connection success......")
 	}
 	//postgres
