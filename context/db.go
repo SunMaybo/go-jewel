@@ -8,6 +8,7 @@ import (
 	//_ "github.com/jinzhu/gorm/dialects/mssql"
 	"github.com/go-redis/redis"
 	"github.com/cihub/seelog"
+	"time"
 )
 
 type Db struct {
@@ -70,9 +71,12 @@ func (d *Db) Open(c Config) error {
 	redisConfig := c.Jewel.Redis
 	if redisConfig.Host != "" {
 		d.RedisDb = redis.NewClient(&redis.Options{
-			Addr:     redisConfig.Host,
-			Password: redisConfig.Password, // no password set
-			DB:       redisConfig.Db,       // use default DB
+			Addr:         redisConfig.Host,
+			Password:     redisConfig.Password, // no password set
+			DB:           redisConfig.Db,       // use default DB
+			ReadTimeout:  30 * time.Second,
+			DialTimeout:  10 * time.Second,
+			WriteTimeout: 30 * time.Second,
 		})
 		pong, err := d.RedisDb.Ping().Result()
 		if err != nil {
