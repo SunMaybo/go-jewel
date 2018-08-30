@@ -4,7 +4,6 @@ import (
 	"os"
 	"strings"
 	"github.com/alecthomas/kingpin"
-	"github.com/gin-gonic/gin"
 )
 
 var (

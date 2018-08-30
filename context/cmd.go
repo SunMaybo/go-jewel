@@ -61,6 +61,8 @@ func (c *Cmd) StartAndDir(b *Boot, dir string) {
 		LoadEnvCfg(dir, env, v)
 	}
 	LoadEnvCfg(dir, env, &cfg)
+	cfg.Jewel.Log = dir + "/log.xml"
+
 	fmt.Println("=============================================================")
 	fmt.Printf("             project:  %s                        \n", cfg.Jewel.Name)
 	fmt.Printf("         environment:  %s                    \n", cfg.Jewel.Profiles.Active)
@@ -131,6 +133,8 @@ func (c *Cmd) Start(b *Boot) {
 	} else if cfg.Jewel.Port <= 0 {
 		cfg.Jewel.Port = 8080
 	}
+	cfg.Jewel.Log = dir + "/log.xml"
+
 	fmt.Println("=============================================================")
 	fmt.Printf("             project:  %s                        \n", cfg.Jewel.Name)
 	fmt.Printf("         environment:  %s                    \n", cfg.Jewel.Profiles.Active)
