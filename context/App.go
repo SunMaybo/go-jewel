@@ -30,6 +30,25 @@ loop:
 	}
 	return app
 }
+
+func LoadFileName(dir string) string {
+	ifs, err := ioutil.ReadDir(dir)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	var name = ""
+loop:
+	for _, v := range ifs {
+		for e := range suffixCfgName {
+			if !v.IsDir() && strings.HasPrefix(v.Name(), "app."+suffixCfgName[e]) {
+				name = v.Name()
+				break loop
+			}
+		}
+
+	}
+	return dir + "/" + name
+}
 func LoadCfg(dir string, inter interface{}) {
 	ifs, err := ioutil.ReadDir(dir)
 	if err != nil {
@@ -70,4 +89,22 @@ loop:
 		app := ConfigStruct{}
 		app.Load(dir+"/"+name, inter)
 	}
+}
+func LoadEnvFileName(dir, env string) string {
+	ifs, err := ioutil.ReadDir(dir)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	var name = ""
+loop:
+	for _, v := range ifs {
+		for e := range suffixCfgName {
+			if !v.IsDir() && strings.HasPrefix(v.Name(), "app-"+env+"."+suffixCfgName[e]) {
+				name = v.Name()
+				break loop
+			}
+		}
+	}
+
+	return dir + "/" + name
 }

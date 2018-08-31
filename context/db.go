@@ -2,154 +2,183 @@ package context
 
 import (
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	//_ "github.com/jinzhu/gorm/dialects/postgres"
-	//_ "github.com/jinzhu/gorm/dialects/sqlite"
-	//_ "github.com/jinzhu/gorm/dialects/mssql"
 	"github.com/go-redis/redis"
-	"github.com/cihub/seelog"
-	"github.com/streadway/amqp"
-	"os"
 	"gopkg.in/mgo.v2"
+	"github.com/SunMaybo/jewel-template/template/rest"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/cihub/seelog"
 )
 
 type Db struct {
-	MysqlDb     *gorm.DB
-	PostDb      *gorm.DB
-	SqlServerDb *gorm.DB
-	Sqlite3Db   *gorm.DB
-	RedisDb     *redis.Client
-	AmqpConnect *amqp.Connection
-	MgoDb       *mgo.Database
+	MysqlDb      map[string]*gorm.DB
+	PostDb       map[string]*gorm.DB
+	RedisDb      map[string]*redis.Client
+	MgoDb        map[string]*mgo.Database
+	RestTemplate map[string]*rest.RestTemplate
 }
 
-func (d *Db) Open(c Config) error {
-	//mysql
-	mysql := c.Jewel.Mysql
-	mgoUrl := c.Jewel.Mgo
-	mgoDb := c.Jewel.MgoDb
-	maxIdleConns := c.Jewel.Max_Idle_Conns
-	maxOpenConns := c.Jewel.Max_Open_Conns
-	if maxIdleConns == 0 {
-		maxIdleConns = 10
+func NewDb() *Db {
+	return &Db{
+		MysqlDb:      make(map[string]*gorm.DB),
+		PostDb:       make(map[string]*gorm.DB),
+		RedisDb:      make(map[string]*redis.Client),
+		MgoDb:        make(map[string]*mgo.Database),
+		RestTemplate: make(map[string]*rest.RestTemplate),
 	}
-	if maxOpenConns == 0 {
-		maxIdleConns = 100
-	}
-	if mysql != "" {
-		db, err := gorm.Open("mysql", mysql)
-		if err != nil {
-			seelog.Error("mysql connection failed......")
-			seelog.Flush()
-			os.Exit(-1)
-			return err
-		}
-		db.LogMode(c.Jewel.SqlShow)
-		db.DB().SetMaxIdleConns(maxIdleConns)
-		db.DB().SetMaxOpenConns(maxOpenConns)
-		d.MysqlDb = db
-		seelog.Info("mysql connection success......")
-	}
-	if mgoUrl != "" {
-		db, err := mgo.Dial(mgoUrl)
-		if err != nil {
-			seelog.Error("mgo connection failed......")
-			seelog.Flush()
-			os.Exit(-1)
-			return err
-		}
-		db.SetMode(mgo.Monotonic, true)
-		d.MgoDb = db.DB(mgoDb)
-		seelog.Info("mgo connection success......")
-	}
-	//postgres
+}
 
-	postgres := c.Jewel.Postgres
-	if postgres != "" {
-		db, err := gorm.Open("postgres", postgres)
-		if err != nil {
-			seelog.Error("postgres connection failed......")
-			seelog.Flush()
-			os.Exit(-1)
-			return err
+func (d *Db) DefaultMysql() *gorm.DB {
+	return d.MysqlDb["default"]
+}
+func (d *Db) Mysql(name string) *gorm.DB {
+	return d.MysqlDb[name]
+}
+
+func (d *Db) DefaultPost() *gorm.DB {
+	return d.PostDb["default"]
+}
+func (d *Db) Post(name string) *gorm.DB {
+	return d.PostDb[name]
+}
+func (d *Db) DefaultRedis() *redis.Client {
+	return d.RedisDb["default"]
+}
+func (d *Db) Redis(name string) *redis.Client {
+	return d.RedisDb[name]
+}
+func (d *Db) DefaultMgo() *mgo.Database {
+	return d.MgoDb["default"]
+}
+func (d *Db) Mgo(name string) *mgo.Database {
+	return d.MgoDb[name]
+}
+
+func (d *Db) DefaultRest() *rest.RestTemplate {
+	return d.RestTemplate["default"]
+}
+func (d *Db) Rest(name string) *rest.RestTemplate {
+	return d.RestTemplate[name]
+}
+
+func (d *Db) Open(jewel JewelProperties) error {
+	mysql := jewel.Jewel.MySql
+	if mysql != nil {
+		for name, sqlDataSource := range mysql {
+			db, err := sqlDataSource.Create("mysql")
+			if err != nil {
+				return err
+			}
+			d.MysqlDb[name] = db
 		}
-		db.DB().SetMaxIdleConns(maxIdleConns)
-		db.DB().SetMaxOpenConns(maxOpenConns)
-		d.PostDb = db
-		seelog.Info("postgres connection success......")
 	}
-	//sqlite3
-	sqlite3 := c.Jewel.Sqlite3
-	if sqlite3 != "" {
-		db, err := gorm.Open("sqlite3", sqlite3)
-		if err != nil {
-			seelog.Error("sqlite3 connection failed......")
-			seelog.Flush()
-			os.Exit(-1)
-			return err
+
+	redis := jewel.Jewel.Redis
+	if redis != nil {
+		for name, redisDataSource := range redis {
+			client, err := redisDataSource.Create()
+			if err != nil {
+				return err
+			}
+			d.RedisDb[name] = client
 		}
-		db.DB().SetMaxIdleConns(maxIdleConns)
-		db.DB().SetMaxOpenConns(maxOpenConns)
-		d.Sqlite3Db = db
-		seelog.Info("sqlite3 connection success......")
 	}
-	//redis
-	redisConfig := c.Jewel.Redis
-	if redisConfig.Host != "" {
-		d.RedisDb = redis.NewClient(&redis.Options{
-			Addr:     redisConfig.Host,
-			Password: redisConfig.Password, // no password set
-			DB:       redisConfig.Db,       // use default DB
-		})
-		pong, err := d.RedisDb.Ping().Result()
-		if err != nil {
-			seelog.Error("redis connection failed......")
-			seelog.Flush()
-			os.Exit(-1)
-			return err
+
+	mgo := jewel.Jewel.Mgo
+	if mgo != nil {
+		for name, mgoDataSource := range mgo {
+			db, err := mgoDataSource.Create()
+			if err != nil {
+				return err
+			}
+			d.MgoDb[name] = db
 		}
-		seelog.Info("redis ping result:" + pong + "......")
-		seelog.Info("redis connection success......")
 	}
-	amqpConfig := c.Jewel.Amqp
-	if amqpConfig != "" {
-		if c.Jewel.Amqp_Vhost == "" {
-			c.Jewel.Amqp_Vhost = "/"
+
+	postgres := jewel.Jewel.Postgres
+	if postgres != nil {
+		for name, postgresDataSource := range postgres {
+			db, err := postgresDataSource.Create("postgres")
+			if err != nil {
+				return err
+			}
+			d.PostDb[name] = db
 		}
-		if c.Jewel.Amqp_Max_Channel <= 0 {
-			c.Jewel.Amqp_Max_Channel = 10
+	}
+
+	rests := jewel.Jewel.Rest
+	if rests != nil {
+		for name, restDataSource := range rests {
+			restTemplate, err := restDataSource.Create()
+			if err != nil {
+				return err
+			}
+			d.RestTemplate[name] = restTemplate
 		}
-		amqpCfg := amqp.Config{
-			Vhost:      c.Jewel.Amqp_Vhost,
-			ChannelMax: c.Jewel.Amqp_Max_Channel,
+	}
+
+	return nil
+}
+
+func (d *Db) Health() error {
+	if d.MysqlDb != nil {
+		for name, db := range d.MysqlDb {
+			err := db.Exec("select 1").Error
+			if err != nil {
+				seelog.Error("mysql db health error:" + name)
+				return err
+			}
 		}
-		conn, err := amqp.DialConfig(amqpConfig, amqpCfg)
-		if err != nil {
-			seelog.Error("amqp connection failed......")
-			seelog.Flush()
-			os.Exit(-1)
-			return err
+	}
+	if d.RedisDb != nil {
+		for name, db := range d.RedisDb {
+			_, err := db.Ping().Result()
+			if err != nil {
+				seelog.Error("redis client health error:" + name)
+				return err
+			}
 		}
-		d.AmqpConnect = conn
-		seelog.Info("amqp connection success......")
+	}
+	if d.MgoDb != nil {
+		for name, db := range d.MgoDb {
+			_, err := db.CollectionNames()
+			if err != nil {
+				seelog.Error("mgo session health error:" + name)
+				return err
+			}
+		}
+	}
+	if d.PostDb != nil {
+		for name, db := range d.PostDb {
+			err := db.Exec("select 1").Error
+			if err != nil {
+				seelog.Error("postgres db health error:" + name)
+				return err
+			}
+		}
 	}
 	return nil
 }
 
 func (d *Db) Close() {
 	if d.MysqlDb != nil {
-		d.MysqlDb.Close()
+		for _, db := range d.MysqlDb {
+			db.Close()
+		}
 	}
 	if d.PostDb != nil {
-		d.PostDb.Close()
-	}
-	if d.Sqlite3Db != nil {
-		d.Sqlite3Db.Close()
+		for _, db := range d.PostDb {
+			db.Close()
+		}
 	}
 	if d.RedisDb != nil {
-		d.RedisDb.Close()
+		for _, client := range d.RedisDb {
+			client.Close()
+		}
 	}
-	if d.AmqpConnect != nil {
-		d.AmqpConnect.Close()
+	if d.MgoDb != nil {
+		for _, db := range d.MgoDb {
+			db.Session.Close()
+		}
 	}
 }

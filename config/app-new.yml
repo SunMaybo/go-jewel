@@ -1,0 +1,12 @@
+jewel:
+   name: tokenup-worker-www
+   port: 8080
+   mysql:
+      primary:
+           url: XXXXXX
+           show_sql: true
+
+
+
+
+

@@ -28,7 +28,7 @@ func (l *Logger) GetLogger(fileName string) (seelog.LoggerInterface) {
     </formats>
 </seelog>`
 		logger, err = seelog.LoggerFromConfigAsBytes([]byte( logConfig_Temp ))
-		if err !=nil{
+		if err != nil {
 			fmt.Println(err)
 		}
 	}

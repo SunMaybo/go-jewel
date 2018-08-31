@@ -13,7 +13,6 @@ func load(engine *gin.Engine) {
 		e.Value.(func(engine *gin.Engine))(engine)
 	}
 }
-
 func registeries(fs []func(engine *gin.Engine)) {
 	if fs == nil {
 		return
