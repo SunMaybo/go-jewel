@@ -8,9 +8,10 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/cihub/seelog"
+	"github.com/SunMaybo/jewel-inject/inject"
 )
 
-type Db struct {
+type BasePlugin struct {
 	MysqlDb      map[string]*gorm.DB
 	PostDb       map[string]*gorm.DB
 	RedisDb      map[string]*redis.Client
@@ -18,8 +19,8 @@ type Db struct {
 	RestTemplate map[string]*rest.RestTemplate
 }
 
-func NewDb() *Db {
-	return &Db{
+func NewBasePlugin() *BasePlugin {
+	return &BasePlugin{
 		MysqlDb:      make(map[string]*gorm.DB),
 		PostDb:       make(map[string]*gorm.DB),
 		RedisDb:      make(map[string]*redis.Client),
@@ -28,99 +29,121 @@ func NewDb() *Db {
 	}
 }
 
-func (d *Db) DefaultMysql() *gorm.DB {
+func (d *BasePlugin) DefaultMysql() *gorm.DB {
 	return d.MysqlDb["default"]
 }
-func (d *Db) Mysql(name string) *gorm.DB {
+func (d *BasePlugin) Mysql(name string) *gorm.DB {
 	return d.MysqlDb[name]
 }
 
-func (d *Db) DefaultPost() *gorm.DB {
+func (d *BasePlugin) DefaultPost() *gorm.DB {
 	return d.PostDb["default"]
 }
-func (d *Db) Post(name string) *gorm.DB {
+func (d *BasePlugin) Post(name string) *gorm.DB {
 	return d.PostDb[name]
 }
-func (d *Db) DefaultRedis() *redis.Client {
+func (d *BasePlugin) DefaultRedis() *redis.Client {
 	return d.RedisDb["default"]
 }
-func (d *Db) Redis(name string) *redis.Client {
+func (d *BasePlugin) Redis(name string) *redis.Client {
 	return d.RedisDb[name]
 }
-func (d *Db) DefaultMgo() *mgo.Database {
+func (d *BasePlugin) DefaultMgo() *mgo.Database {
 	return d.MgoDb["default"]
 }
-func (d *Db) Mgo(name string) *mgo.Database {
+func (d *BasePlugin) Mgo(name string) *mgo.Database {
 	return d.MgoDb[name]
 }
 
-func (d *Db) DefaultRest() *rest.RestTemplate {
+func (d *BasePlugin) DefaultRest() *rest.RestTemplate {
 	return d.RestTemplate["default"]
 }
-func (d *Db) Rest(name string) *rest.RestTemplate {
+func (d *BasePlugin) Rest(name string) *rest.RestTemplate {
 	return d.RestTemplate[name]
 }
 
-func (d *Db) Open(jewel JewelProperties) error {
+func (d *BasePlugin) Open(injector *inject.Injector) error {
+	var jewel JewelProperties
+	jewel = injector.Service(&jewel).(JewelProperties)
 	mysql := jewel.Jewel.MySql
 	if mysql != nil {
 		for name, sqlDataSource := range mysql {
+			if sqlDataSource.Enabled != nil && !*sqlDataSource.Enabled {
+				continue
+			}
 			db, err := sqlDataSource.Create("mysql")
 			if err != nil {
 				return err
 			}
 			d.MysqlDb[name] = db
+			seelog.Infof("mysql connection success,dataSource:%s", name)
 		}
 	}
 
 	redis := jewel.Jewel.Redis
 	if redis != nil {
 		for name, redisDataSource := range redis {
+			if redisDataSource.Enabled != nil && !*redisDataSource.Enabled {
+				continue
+			}
 			client, err := redisDataSource.Create()
 			if err != nil {
 				return err
 			}
 			d.RedisDb[name] = client
+			seelog.Infof("redis connection success,dataSource:%s", name)
 		}
 	}
 
 	mgo := jewel.Jewel.Mgo
 	if mgo != nil {
 		for name, mgoDataSource := range mgo {
+			if mgoDataSource.Enabled != nil && !*mgoDataSource.Enabled {
+				continue
+			}
 			db, err := mgoDataSource.Create()
 			if err != nil {
 				return err
 			}
 			d.MgoDb[name] = db
+			seelog.Infof("mgo connection success,dataSource:%s", name)
 		}
 	}
 
 	postgres := jewel.Jewel.Postgres
 	if postgres != nil {
 		for name, postgresDataSource := range postgres {
+			if postgresDataSource.Enabled != nil && !*postgresDataSource.Enabled {
+				continue
+			}
 			db, err := postgresDataSource.Create("postgres")
 			if err != nil {
 				return err
 			}
 			d.PostDb[name] = db
+			seelog.Infof("postgres connection success,dataSource:%s", name)
 		}
 	}
 
 	rests := jewel.Jewel.Rest
 	if rests != nil {
 		for name, restDataSource := range rests {
+			if restDataSource.Enabled != nil && !*restDataSource.Enabled {
+				continue
+			}
 			restTemplate, err := restDataSource.Create()
 			if err != nil {
 				return err
 			}
 			d.RestTemplate[name] = restTemplate
+			seelog.Infof("rest create success,templateName:%s", name)
 		}
 	}
 
 	return nil
 }
 
-func (d *Db) Health() error {
+func (d *BasePlugin) Health() error {
 	if d.MysqlDb != nil {
 		for name, db := range d.MysqlDb {
 			err := db.Exec("select 1").Error
@@ -160,7 +183,11 @@ func (d *Db) Health() error {
 	return nil
 }
 
-func (d *Db) Close() {
+func (d *BasePlugin) Interface() (string, interface{}) {
+	return "base", nil
+}
+
+func (d *BasePlugin) Close() {
 	if d.MysqlDb != nil {
 		for _, db := range d.MysqlDb {
 			db.Close()

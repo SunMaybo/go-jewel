@@ -19,12 +19,11 @@ type Boot struct {
 	cfgPointer []interface{}
 	injector   []interface{}
 	cmd        Cmd
-	funs       []func()
-	asyncFuns  []func()
+	funs       []func(injector *inject.Injector)
+	asyncFuns  []func(injector *inject.Injector)
 	Cron       *cron.Cron
+	plugins    []Plugin
 }
-
-var b *Boot
 
 func NewInstance() *Boot {
 	cron := cron.New()
@@ -34,20 +33,17 @@ func NewInstance() *Boot {
 	}
 	boot.cmd = Cmd{
 		Params: make(map[string]*string),
-		Cmd:    make(map[string]func(c JewelProperties)),
+		Cmd:    make(map[string]func()),
 	}
 	boot.inject = inject.New()
-	b = boot
 	return boot
-}
-func GetBoot() *Boot {
-	return b
 }
 func (b *Boot) GetInject() *inject.Injector {
 	return b.inject
 }
-func (b *Boot) GetCmd() *Cmd {
-	return &b.cmd
+
+func (b *Boot) AddPlugins(plugins ... Plugin) {
+	b.plugins = append(b.plugins, plugins...)
 }
 
 func (b *Boot) AddApply(pointers ... interface{}) *Boot {
@@ -61,11 +57,11 @@ func (b *Boot) AddTask(name, cron string, fun func()) *Boot {
 	b.Cron.AddFunc(cron, fun)
 	return b
 }
-func (b *Boot) AddFun(fun func()) *Boot {
+func (b *Boot) AddFun(fun func(injector *inject.Injector)) *Boot {
 	b.funs = append(b.funs, fun)
 	return b
 }
-func (b *Boot) AddAsyncFun(fun func()) *Boot {
+func (b *Boot) AddAsyncFun(fun func(injector *inject.Injector)) *Boot {
 	b.asyncFuns = append(b.asyncFuns, fun)
 	return b
 }
@@ -83,62 +79,86 @@ func (b *Boot) AddApplyCfg(pointers ... interface{}) *Boot {
 	return b
 }
 func (b *Boot) StartAndDir(dir string) (*Boot) {
-	b.cmd.defaultCmd(func(c JewelProperties) {
-		b.defaultService(c, c.Jewel.Profiles.Active)
+	b.cmd.defaultCmd(func() {
+		b.basePluginService()
+
+		b.pluginService()
+
 	})
 	b.cmd.StartAndDir(b, dir)
 	return b
 }
 func (b *Boot) BindHttp(r func(engine *gin.Engine)) {
 
-	b.cmd.httpCmd(func(c JewelProperties) {
-		b.http(c, []func(engine *gin.Engine){r})
+	b.cmd.httpCmd(func() {
+		b.http([]func(engine *gin.Engine){r})
 	})
 	b.cmd.Http(b)
 }
-
-func (b *Boot) defaultService(c JewelProperties, env string) {
-	db := NewDb()
-	err := db.Open(c)
+func (b *Boot) pluginService() {
+	for _, plugin := range b.plugins {
+		err := plugin.Open(b.GetInject())
+		if err != nil {
+			seelog.Error(err)
+			seelog.Flush()
+			os.Exit(-1)
+		}
+		name, inter := plugin.Interface()
+		b.inject.ApplyWithName("plugin:"+name, inter)
+	}
+}
+func (b *Boot) basePluginService() {
+	base := NewBasePlugin()
+	err := base.Open(b.GetInject())
 	if err != nil {
 		seelog.Error(err)
 		seelog.Flush()
 		os.Exit(-1)
 	}
-	if db.RedisDb != nil {
-		for name, client := range db.RedisDb {
-			b.inject.ApplyWithName(name, client)
+	if base.RedisDb != nil {
+		for name, client := range base.RedisDb {
+			b.inject.ApplyWithName("plugin:redis."+name, client)
 		}
 	}
-	if db.MysqlDb != nil {
-		for name, mysql := range db.MysqlDb {
-			b.inject.ApplyWithName(name, mysql)
+	if base.MysqlDb != nil {
+		for name, mysql := range base.MysqlDb {
+			b.inject.ApplyWithName("plugin:mysql."+name, mysql)
 		}
 	}
-	if db.PostDb != nil {
-		for name, postgres := range db.PostDb {
-			b.inject.ApplyWithName(name, postgres)
+	if base.PostDb != nil {
+		for name, postgres := range base.PostDb {
+			b.inject.ApplyWithName("plugin:postgres."+name, postgres)
 		}
 	}
-	if db.MgoDb != nil {
-		for name, postgres := range db.PostDb {
-			b.inject.ApplyWithName(name, postgres)
+	if base.MgoDb != nil {
+		for name, postgres := range base.PostDb {
+			b.inject.ApplyWithName("plugin:mgo."+name, postgres)
 		}
 	}
-	if db.RestTemplate != nil {
-		for name, restTemplate := range db.RestTemplate {
-			b.inject.ApplyWithName(name, restTemplate)
+	if base.RestTemplate != nil {
+		for name, restTemplate := range base.RestTemplate {
+			b.inject.ApplyWithName("plugin:rest."+name, restTemplate)
 		}
 	}
-	Services.ServiceMap[DB] = db
+	b.inject.Apply(&base)
+
 }
-func (b *Boot) http(c JewelProperties, fs []func(engine *gin.Engine)) {
-	gin.SetMode(gin.ReleaseMode)
+func (b *Boot) http(fs []func(engine *gin.Engine)) {
+	var jewel JewelProperties
+	jewel = b.GetInject().Service(&jewel).(JewelProperties)
+	if jewel.Jewel.GinMode != nil {
+		gin.SetMode(*jewel.Jewel.GinMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	engine := gin.Default()
-	b.defaultRouter(engine, c.Jewel.Profiles.Active, c.Jewel.Port, time.Now().String(), c.Jewel.Name)
+	b.defaultRouter(engine, jewel.Jewel.Profiles.Active, jewel.Jewel.Port, time.Now().String(), jewel.Jewel.Name)
 	registeries(fs)
 	load(engine)
-	engine.Run(fmt.Sprintf(":%d", + c.Jewel.Port))
+	err := engine.Run(fmt.Sprintf(":%d", + jewel.Jewel.Port))
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 type Info struct {
@@ -172,16 +192,18 @@ func (b *Boot) defaultRouter(engine *gin.Engine, env string, port int, bootTime 
 		}
 		context.String(http.StatusOK, "%v", string(buff))
 	})
-}
-
-/*
-获取程序运行路径
-*/
-func getCurrentDirectory() string {
-	pwd, err := os.Getwd()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	return pwd + "/config"
+	engine.GET("/healths", func(context *gin.Context) {
+		services := b.GetInject().ServiceByPrefixName("plugin:")
+		if services == nil {
+			context.JSON(http.StatusOK, gin.H{"status": "UP"})
+		}
+		for _, service := range services {
+			plugin := service.(Plugin)
+			err := plugin.Health()
+			if err != nil {
+				context.JSON(http.StatusOK, gin.H{"status": "DOWN"})
+			}
+		}
+		context.JSON(http.StatusOK, gin.H{"status": "UP"})
+	})
 }

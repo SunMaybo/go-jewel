@@ -75,7 +75,7 @@ func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
 		c := kingpin.MustParse(jewel.app.Parse(os.Args[1:]))
 		if cmd.FullCommand() == c && c == "server" {
 			jewel.boot = jewel.boot.StartAndDir(*target)
-			jewel.boot.BindHttp(funHttp)
+			jewel.boot.BindHttp(httpFun)
 			return
 		} else if cmd.FullCommand() == c {
 			if fun, ok := jewel.cmdFunc[c]; ok {

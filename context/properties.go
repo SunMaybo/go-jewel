@@ -20,12 +20,13 @@ type SqlDataSource struct {
 	ConnMaxLifeTime *int    `json:"conn_max_life_time" yaml:"conn_max_life_time" xml:"conn_max_life_time"`
 	MaxIdleConns    *int    `json:"max_idle_conns" yaml:"max_idle_conns" xml:"max_idle_conns"`
 	MaxOpenConns    *int    `json:"max_open_conns" yaml:"max_open_conns" xml:"max_open_conns"`
-	SqlShow         *bool   `json:"sql_show" yaml:"sql_show" xml:"sql_show"`
+	SqlShow         *bool   `json:"sql_show" yaml:"show_sql" xml:"show_sql"`
 	URL             *string `json:"url" yaml:"url" xml:"url"`
+	Enabled         *bool   `json:"enabled" yaml:"enabled" xml:"enabled"`
 }
 
 func (ds *SqlDataSource) Create(name string) (*gorm.DB, error) {
-	db, err := gorm.Open(name, ds.URL)
+	db, err := gorm.Open(name, *ds.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +34,7 @@ func (ds *SqlDataSource) Create(name string) (*gorm.DB, error) {
 		db.LogMode(*ds.SqlShow)
 	}
 	if ds.ConnMaxLifeTime != nil {
-		db.DB().SetConnMaxLifetime(time.Duration(*ds.ConnMaxLifeTime * 1000))
+		db.DB().SetConnMaxLifetime(time.Duration(*ds.ConnMaxLifeTime * 1000000))
 	}
 	if ds.MaxIdleConns != nil {
 		db.DB().SetMaxIdleConns(*ds.MaxIdleConns)
@@ -60,6 +61,7 @@ type RedisDataSource struct {
 	ReadTimeout        *int    `json:"read_timeout" yaml:"read_timeout" xml:"read_timeout"`
 	TLS                *bool   `json:"tls" yaml:"tls" xml:"tls"`
 	WriteTimeout       *int    `json:"write_timeout" yaml:"write_timeout" xml:"write_timeout"`
+	Enabled            *bool   `json:"enabled" yaml:"enabled" xml:"enabled"`
 }
 
 func (ds *RedisDataSource) Create() (*redis.Client, error) {
@@ -71,28 +73,28 @@ func (ds *RedisDataSource) Create() (*redis.Client, error) {
 		option.DB = *ds.Db
 	}
 	if ds.WriteTimeout != nil {
-		option.WriteTimeout = time.Duration(*ds.WriteTimeout * 1000)
+		option.WriteTimeout = time.Duration(*ds.WriteTimeout * 1000000)
 	}
 	if ds.DialTimeout != nil {
-		option.DialTimeout = time.Duration(*ds.DialTimeout * 1000)
+		option.DialTimeout = time.Duration(*ds.DialTimeout * 1000000)
 	}
 	if ds.ReadTimeout != nil {
-		option.ReadTimeout = time.Duration(*ds.ReadTimeout * 1000)
+		option.ReadTimeout = time.Duration(*ds.ReadTimeout * 1000000)
 	}
 	if ds.IdleCheckFrequency != nil {
 		option.IdleCheckFrequency = time.Duration(*ds.IdleCheckFrequency)
 	}
 	if ds.IdleTimeout != nil {
-		option.IdleTimeout = time.Duration(*ds.IdleTimeout * 1000)
+		option.IdleTimeout = time.Duration(*ds.IdleTimeout * 1000000)
 	}
 	if ds.MaxRetries != nil {
 		option.MaxRetries = *ds.MaxRetries
 	}
 	if ds.MaxRetryBackOff != nil {
-		option.MaxRetryBackoff = time.Duration(*ds.MaxRetryBackOff * 1000)
+		option.MaxRetryBackoff = time.Duration(*ds.MaxRetryBackOff * 1000000)
 	}
 	if ds.MinRetryBackOff != nil {
-		option.MinRetryBackoff = time.Duration(*ds.MinRetryBackOff * 1000)
+		option.MinRetryBackoff = time.Duration(*ds.MinRetryBackOff * 1000000)
 	}
 	if ds.Network != nil {
 		option.Network = *ds.Network
@@ -104,7 +106,7 @@ func (ds *RedisDataSource) Create() (*redis.Client, error) {
 		option.PoolSize = *ds.PoolSize
 	}
 	if ds.PoolTimeout != nil {
-		option.PoolTimeout = time.Duration(*ds.PoolTimeout * 1000)
+		option.PoolTimeout = time.Duration(*ds.PoolTimeout * 1000000)
 	}
 	if ds.TLS != nil {
 		option.TLSConfig = &tls.Config{
@@ -132,6 +134,7 @@ type MgoDataSource struct {
 	Source         *string `json:"source" yaml:"source" xml:"source"`
 	Timeout        *int    `json:"timeout" yaml:"timeout" xml:"timeout"`
 	UserName       *string `json:"user_name" yaml:"user_name" xml:"user_name"`
+	Enabled        *bool   `json:"enabled" yaml:"enabled" xml:"enabled"`
 }
 
 func (ds *MgoDataSource) Create() (*mgo.Database, error) {
@@ -167,7 +170,7 @@ func (ds *MgoDataSource) Create() (*mgo.Database, error) {
 		info.Source = *ds.Source
 	}
 	if ds.Timeout != nil {
-		info.Timeout = time.Duration(*ds.Timeout * 1000)
+		info.Timeout = time.Duration(*ds.Timeout * 1000000)
 	}
 	if ds.UserName != nil {
 		info.Username = *ds.UserName
@@ -182,26 +185,35 @@ func (ds *MgoDataSource) Create() (*mgo.Database, error) {
 
 type RestProperties struct {
 	Authorization      *string `json:"authorization" yaml:"authorization" xml:"authorization"`
-	DisableCompression *bool   `json:"disable_compression" yaml:"authorization" xml:"authorization"`
-	IdleConnTimeout    *int    `json:"idle_conn_timeout" yaml:"authorization" xml:"authorization"`
-	MaxIdleConns       *int    `json:"max_idle_conns" yaml:"authorization" xml:"authorization"`
-	ReplyCount         *int    `json:"reply_count" yaml:"authorization" xml:"authorization"`
-	SocketTimeout      *int    `json:"socket_timeout" yaml:"authorization" xml:"authorization"`
+	DisableCompression *bool   `json:"disable_compression" yaml:"disable_compression" xml:"disable_compression"`
+	IdleConnTimeout    *int    `json:"idle_conn_timeout" yaml:"idle_conn_timeout" xml:"idle_conn_timeout"`
+	MaxIdleConns       *int    `json:"max_idle_conns" yaml:"max_idle_conns" xml:"max_idle_conns"`
+	ReplyCount         *int    `json:"reply_count" yaml:"reply_count" xml:"reply_count"`
+	SocketTimeout      *int    `json:"socket_timeout" yaml:"socket_timeout" xml:"socket_timeout"`
+	Enabled            *bool   `json:"enabled" yaml:"enabled" xml:"enabled"`
 }
 
 func (restOptions *RestProperties) Create() (*rest.RestTemplate, error) {
 	config := rest.ClientConfig{}
 	if restOptions.MaxIdleConns != nil {
 		config.MaxIdleConns = *restOptions.MaxIdleConns
+	} else {
+		config.MaxIdleConns = 2
 	}
 	if restOptions.ReplyCount != nil {
 		config.ReplyCount = *restOptions.ReplyCount
+	} else {
+		config.ReplyCount = 3
 	}
 	if restOptions.SocketTimeout != nil {
-		config.SocketTimeout = time.Duration(*restOptions.SocketTimeout * 1000)
+		config.SocketTimeout = time.Duration(*restOptions.SocketTimeout * 1000000)
+	} else {
+		config.SocketTimeout = 3 * time.Second
 	}
 	if restOptions.IdleConnTimeout != nil {
-		config.IdleConnTimeout = time.Duration(*restOptions.IdleConnTimeout * 1000)
+		config.IdleConnTimeout = time.Duration(*restOptions.IdleConnTimeout * 1000000)
+	} else {
+		config.IdleConnTimeout = 10 * time.Second
 	}
 	if restOptions.Authorization != nil {
 		config.Authorization = *restOptions.Authorization
@@ -214,8 +226,9 @@ func (restOptions *RestProperties) Create() (*rest.RestTemplate, error) {
 
 type JewelProperties struct {
 	Jewel struct {
-		Name string `json:"name" yaml:"name" xml:"name"`
-		Port int    `json:"port" yaml:"port" xml:"port"`
+		Name    string  `json:"name" yaml:"name" xml:"name"`
+		Port    int     `json:"port" yaml:"port" xml:"port"`
+		GinMode *string `json:"gin_mode" yaml:"gin_mode" xml:"gin_mode"`
 		Profiles struct {
 			Active string `json:"active"`
 		} `json:"profiles" yaml:"profiles" xml:"profiles"`
