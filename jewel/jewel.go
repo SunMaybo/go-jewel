@@ -84,6 +84,9 @@ func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
 		c := kingpin.MustParse(jewel.app.Parse(os.Args[1:]))
 		if cmd.FullCommand() == c && c == "server" {
 			jewel.boot = jewel.boot.StartAndDir(*target)
+			etcRegister := jewel.boot.GetInject().ServiceByName("plugin:etcd_register")
+			if etcRegister!=nil {
+			}
 			jewel.boot.BindHttp(httpFun)
 			jewel.boot.Close()
 			return

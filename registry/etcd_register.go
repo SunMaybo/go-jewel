@@ -68,12 +68,14 @@ func (etcPlugin *EtcRegistry) refresh(id interface{}) {
 	leaveKeepAliveResp, err := etcPlugin.client.KeepAlive(ctx, id.(clientv3.LeaseID))
 	if err != nil {
 		seelog.Errorf("lease_id:%x,renewed failed :%s", id, err.Error())
-	} else {
-		seelog.Infof("lease_id:%x,renewed success...", id)
 	}
-	resp := <-leaveKeepAliveResp
-	time.Sleep(time.Duration(*etcPlugin.RefreshTimeOut * 1000000))
-	etcPlugin.refresh(resp.ID)
+	for {
+		if resp, ok := <-leaveKeepAliveResp; ok {
+			seelog.Infof("lease_id:%x,renewed success...", resp.ID)
+		}
+		time.Sleep(time.Duration(*etcPlugin.RefreshTimeOut * 1000000))
+	}
+
 }
 func (etcPlugin *EtcRegistry) register() error {
 	cfg := clientv3.Config{}
