@@ -6,7 +6,7 @@ import (
 	"github.com/SunMaybo/go-jewel/context"
 	"github.com/gin-gonic/gin"
 	"github.com/SunMaybo/jewel-inject/inject"
-	"github.com/SunMaybo/go-jewel/registry"
+	"go-jewel/registry"
 )
 
 type Jewel struct {

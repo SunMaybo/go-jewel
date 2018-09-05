@@ -60,21 +60,18 @@ type EtcRegistry struct {
 }
 
 func (etcPlugin *EtcRegistry) refresh(id interface{}) {
-	if atomic.LoadInt32(etcPlugin.IsRefresh) != 0 {
-		return
-	}
-	leaveKeepAliveResp, err := etcPlugin.client.KeepAlive(context.TODO(), id.(clientv3.LeaseID))
+	ctx := context.TODO()
+	leaveKeepAliveResp, err := etcPlugin.client.KeepAlive(ctx, id.(clientv3.LeaseID))
 	if err != nil {
 		seelog.Errorf("lease_id:%x,renewed failed :%s", id, err.Error())
 	}
-	for {
-		if resp, ok := <-leaveKeepAliveResp; ok {
-			seelog.Infof("lease_id:%x,renewed success...", resp.ID)
-		} else {
-			seelog.Infof("lease_id:%x,renewed failed...", resp.ID)
+	for e := range leaveKeepAliveResp {
+		if atomic.LoadInt32(etcPlugin.IsRefresh) != 0 {
+			etcPlugin.client.Revoke(context.TODO(), id.(clientv3.LeaseID))
+			return
 		}
+		seelog.Infof("lease_id:%x,renewed success...", e.ID)
 	}
-
 }
 func (etcPlugin *EtcRegistry) register() error {
 	cfg := clientv3.Config{}
@@ -110,13 +107,10 @@ func (etcPlugin *EtcRegistry) register() error {
 		return err
 	}
 	etcPlugin.client = client
-	id, err := etcPlugin.Up()
+	_, err = etcPlugin.Up()
 	if err != nil {
 		return err
 	}
-	go func() {
-		etcPlugin.refresh(id)
-	}()
 	return nil
 }
 func (etcPlugin *EtcRegistry) Services() ([]Server, error) {
@@ -161,6 +155,9 @@ func (etcPlugin *EtcRegistry) Up() (interface{}, error) {
 	}
 	atomic.CompareAndSwapInt32(etcPlugin.IsRefresh, 1, 0)
 	seelog.Infof("successful registration to the %s", *etcPlugin.Urls)
+	go func() {
+		etcPlugin.refresh(leaseResp.ID)
+	}()
 	return leaseResp.ID, nil
 }
 func (etcPlugin *EtcRegistry) Down() error {
