@@ -87,10 +87,10 @@ func (b *Boot) StartAndDir(dir string) (*Boot) {
 	b.cmd.StartAndDir(b, dir)
 	return b
 }
-func (b *Boot) BindHttp(r func(engine *gin.Engine)) {
+func (b *Boot) BindHttp(r ... func(engine *gin.Engine)) {
 
 	b.cmd.httpCmd(func() {
-		b.http([]func(engine *gin.Engine){r})
+		b.http(r)
 	})
 	b.cmd.Http(b)
 }
