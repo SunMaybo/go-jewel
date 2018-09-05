@@ -1,23 +1,6 @@
 jewel:
    name: tokenup-worker-www
    port: 8080
-   mysql:
-      default:
-           url: root:mypass@tcp(127.0.0.1:3306)/tokenup-risk-controller?charset=utf8mb4,utf8&collation=utf8mb4_unicode_ci
-           show_sql: true
-           enabled: true
-      primary_datasource:
-            url: root:mypass@tcp(127.0.0.1:3306)/tokenup-risk-controller?charset=utf8mb4,utf8&collation=utf8mb4_unicode_ci
-            conn_max_life_time: 5000
-            max_idle_conns: 10
-            max_open_conns: 2
-            show_sql: true
-   mgo:
-      default:
-         address: 18.136.124.100:27017
-         database: tokenup-eos
-         pool_limit: 10
-         timeout: 5000
    rest:
       default:
          enabled: false
