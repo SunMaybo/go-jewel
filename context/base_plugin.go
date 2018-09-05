@@ -29,40 +29,40 @@ func NewBasePlugin() *BasePlugin {
 	}
 }
 
-func (d BasePlugin) DefaultMysql() *gorm.DB {
+func (d *BasePlugin) DefaultMysql() *gorm.DB {
 	return d.MysqlDb["default"]
 }
-func (d BasePlugin) Mysql(name string) *gorm.DB {
+func (d *BasePlugin) Mysql(name string) *gorm.DB {
 	return d.MysqlDb[name]
 }
 
-func (d BasePlugin) DefaultPost() *gorm.DB {
+func (d *BasePlugin) DefaultPost() *gorm.DB {
 	return d.PostDb["default"]
 }
-func (d BasePlugin) Post(name string) *gorm.DB {
+func (d *BasePlugin) Post(name string) *gorm.DB {
 	return d.PostDb[name]
 }
-func (d BasePlugin) DefaultRedis() *redis.Client {
+func (d *BasePlugin) DefaultRedis() *redis.Client {
 	return d.RedisDb["default"]
 }
-func (d BasePlugin) Redis(name string) *redis.Client {
+func (d *BasePlugin) Redis(name string) *redis.Client {
 	return d.RedisDb[name]
 }
-func (d BasePlugin) DefaultMgo() *mgo.Database {
+func (d *BasePlugin) DefaultMgo() *mgo.Database {
 	return d.MgoDb["default"]
 }
-func (d BasePlugin) Mgo(name string) *mgo.Database {
+func (d *BasePlugin) Mgo(name string) *mgo.Database {
 	return d.MgoDb[name]
 }
 
 func (d BasePlugin) DefaultRest() *rest.RestTemplate {
 	return d.RestTemplate["default"]
 }
-func (d BasePlugin) Rest(name string) *rest.RestTemplate {
+func (d *BasePlugin) Rest(name string) *rest.RestTemplate {
 	return d.RestTemplate[name]
 }
 
-func (d BasePlugin) Open(injector *inject.Injector) error {
+func (d *BasePlugin) Open(injector *inject.Injector) error {
 	var jewel JewelProperties
 	jewel = injector.Service(&jewel).(JewelProperties)
 	mysql := jewel.Jewel.MySql
@@ -143,7 +143,7 @@ func (d BasePlugin) Open(injector *inject.Injector) error {
 	return nil
 }
 
-func (d BasePlugin) Health() error {
+func (d *BasePlugin) Health() error {
 	if d.MysqlDb != nil {
 		for name, db := range d.MysqlDb {
 			err := db.Exec("select 1").Error
@@ -183,11 +183,7 @@ func (d BasePlugin) Health() error {
 	return nil
 }
 
-func (d BasePlugin) Interface() (string, interface{}) {
-	return "base", nil
-}
-
-func (d BasePlugin) Close() {
+func (d *BasePlugin) Close() {
 	if d.MysqlDb != nil {
 		for _, db := range d.MysqlDb {
 			db.Close()
@@ -208,4 +204,7 @@ func (d BasePlugin) Close() {
 			db.Session.Close()
 		}
 	}
+}
+func (d *BasePlugin) Interface() (string, interface{}) {
+	return "base_plugin", d
 }

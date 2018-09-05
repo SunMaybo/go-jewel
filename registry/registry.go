@@ -5,4 +5,5 @@ type Registry interface {
 	register() error
 	Up() (interface{}, error)
 	Down() error
+	Services() ([]Server, error)
 }

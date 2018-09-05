@@ -1,6 +1,6 @@
 jewel:
    name: tokenup-worker-www
-   port: 8080
+   port: 8088
    log: ./config/log.xml
    mysql:
    postgres: ""

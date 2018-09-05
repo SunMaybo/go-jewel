@@ -6,4 +6,5 @@ type RegisterOperation interface {
 	HttpBindOp(engine *gin.Engine)
 	Up(context gin.Context)
 	Down(context gin.Context)
+	Services(context *gin.Context)
 }

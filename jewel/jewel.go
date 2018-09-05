@@ -24,7 +24,7 @@ func NewHttp() *Jewel {
 	}
 	jewel.boot.AddApplyCfg(&registry.JewelRegisterProperties{})
 	var plugin context.Plugin
-	plugin = registry.EtcRegisterPlugin{}
+	plugin = &registry.EtcRegisterPlugin{}
 	jewel.boot.AddPlugins(plugin)
 	jewel.cmd = append(jewel.cmd, jewel.app.Command("server", "Start a http server"))
 	return jewel
@@ -88,7 +88,7 @@ func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
 			if etcRegister != nil {
 				reg := etcRegister.(*registry.EtcRegistry)
 				registerOperation := registry.EtcRegisterOperation{
-					Registry: *reg,
+					Registry: reg,
 				}
 				jewel.boot.BindHttp(httpFun, registerOperation.HttpBindOp)
 			} else {

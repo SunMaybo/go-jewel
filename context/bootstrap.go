@@ -42,6 +42,9 @@ func (b *Boot) GetInject() *inject.Injector {
 }
 
 func (b *Boot) AddPlugins(plugins ... Plugin) {
+	for e := range plugins {
+		checkPointer(plugins[e])
+	}
 	b.plugins = append(b.plugins, plugins...)
 }
 
@@ -103,7 +106,7 @@ func (b *Boot) pluginService() {
 			os.Exit(-1)
 		}
 		name, inter := plugin.Interface()
-		b.inject.ApplyWithName("plugin:"+name, inter)
+		b.GetInject().ApplyWithName("plugin:"+name, inter)
 	}
 }
 func (b *Boot) Close() {
@@ -144,6 +147,8 @@ func (b *Boot) basePluginService() {
 			b.inject.ApplyWithName("rest."+name, restTemplate)
 		}
 	}
+	name, inter := base.Interface()
+	b.GetInject().ApplyWithName("plugin:"+name, inter)
 }
 func (b *Boot) http(fs []func(engine *gin.Engine)) {
 	var jewel JewelProperties

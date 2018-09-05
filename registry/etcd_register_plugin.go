@@ -11,7 +11,7 @@ type EtcRegisterPlugin struct {
 	Client *EtcRegistry
 }
 
-func (plugin EtcRegisterPlugin) Open(injector *inject.Injector) error {
+func (plugin *EtcRegisterPlugin) Open(injector *inject.Injector) error {
 	p := injector.Service(&JewelRegisterProperties{}).(JewelRegisterProperties)
 	etcPlugin := p.Registry.JewelPlugin.EtcdPlugin
 	if etcPlugin.Enabled != nil && !*etcPlugin.Enabled {
@@ -31,18 +31,17 @@ func (plugin EtcRegisterPlugin) Open(injector *inject.Injector) error {
 	plugin.Client = etcPlugin
 	return etcPlugin.register()
 }
-func (plugin EtcRegisterPlugin) Health() error {
+func (plugin *EtcRegisterPlugin) Health() error {
 	return nil
 }
-func (plugin EtcRegisterPlugin) Close() {
+func (plugin *EtcRegisterPlugin) Close() {
 	seelog.Error("close etcd service register")
 	plugin.Client.Down()
 	plugin.Client.client.Close()
 }
-func (plugin EtcRegisterPlugin) Interface() (string, interface{}) {
+func (plugin *EtcRegisterPlugin) Interface() (string, interface{}) {
 	return "etcd_register", plugin.Client
 }
-
 func getLocalIp() (IpAddr string) {
 	addrSlice, err := net.InterfaceAddrs()
 	if nil != err {

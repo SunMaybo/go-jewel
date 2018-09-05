@@ -59,25 +59,24 @@ type EtcRegistry struct {
 	client           *clientv3.Client
 }
 
-func (etcPlugin EtcRegistry) refresh(id interface{}) {
+func (etcPlugin *EtcRegistry) refresh(id interface{}) {
 	if atomic.LoadInt32(etcPlugin.IsRefresh) != 0 {
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	leaveKeepAliveResp, err := etcPlugin.client.KeepAlive(ctx, id.(clientv3.LeaseID))
+	leaveKeepAliveResp, err := etcPlugin.client.KeepAlive(context.TODO(), id.(clientv3.LeaseID))
 	if err != nil {
 		seelog.Errorf("lease_id:%x,renewed failed :%s", id, err.Error())
 	}
 	for {
 		if resp, ok := <-leaveKeepAliveResp; ok {
 			seelog.Infof("lease_id:%x,renewed success...", resp.ID)
+		} else {
+			seelog.Infof("lease_id:%x,renewed failed...", resp.ID)
 		}
-		time.Sleep(time.Duration(*etcPlugin.RefreshTimeOut * 1000000))
 	}
 
 }
-func (etcPlugin EtcRegistry) register() error {
+func (etcPlugin *EtcRegistry) register() error {
 	cfg := clientv3.Config{}
 	if etcPlugin.Urls != nil {
 		cfg.Endpoints = strings.Split(*etcPlugin.Urls, ",")
@@ -120,10 +119,24 @@ func (etcPlugin EtcRegistry) register() error {
 	}()
 	return nil
 }
-func (etcPlugin EtcRegistry) Up() (interface{}, error) {
+func (etcPlugin *EtcRegistry) Services() ([]Server, error) {
+	resp, err := etcPlugin.client.Get(context.TODO(), etcPlugin.Name, clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	var services []Server
+	for _, v := range resp.Kvs {
+		server := Server{}
+		err := json.Unmarshal(v.Value, &server)
+		if err != nil {
+			return nil, err
+		}
+		services = append(services, server)
+	}
+	return services, nil
+}
+func (etcPlugin *EtcRegistry) Up() (interface{}, error) {
 	//register
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 	var key string
 	if (etcPlugin.UseAddress == nil || !*etcPlugin.UseAddress) && etcPlugin.Host != nil {
 		key = etcPlugin.Name + "/" + *etcPlugin.Host + ":" + strconv.FormatInt(int64(etcPlugin.Port), 10)
@@ -136,13 +149,13 @@ func (etcPlugin EtcRegistry) Up() (interface{}, error) {
 	}
 	if etcPlugin.RefreshTimeOut == nil {
 		etcPlugin.RefreshTimeOut = new(int64)
-		*etcPlugin.RefreshTimeOut = 30000
+		*etcPlugin.RefreshTimeOut = 90000
 	}
-	leaseResp, err := etcPlugin.client.Lease.Grant(ctx, *etcPlugin.RefreshTimeOut/1000*3)
+	leaseResp, err := etcPlugin.client.Lease.Grant(context.TODO(), *etcPlugin.RefreshTimeOut/1000)
 	if err != nil {
 		return nil, err
 	}
-	_, err = etcPlugin.client.Put(ctx, key, string(serverBuff), clientv3.WithLease(leaseResp.ID))
+	_, err = etcPlugin.client.Put(context.TODO(), key, string(serverBuff), clientv3.WithLease(leaseResp.ID))
 	if err != nil {
 		return nil, err
 	}
@@ -150,9 +163,7 @@ func (etcPlugin EtcRegistry) Up() (interface{}, error) {
 	seelog.Infof("successful registration to the %s", *etcPlugin.Urls)
 	return leaseResp.ID, nil
 }
-func (etcPlugin EtcRegistry) Down() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+func (etcPlugin *EtcRegistry) Down() error {
 	var key string
 	if (etcPlugin.UseAddress == nil || !*etcPlugin.UseAddress) && etcPlugin.Host != nil {
 		key = etcPlugin.Name + "/" + *etcPlugin.Host + ":" + strconv.FormatInt(int64(etcPlugin.Port), 10)
@@ -160,7 +171,7 @@ func (etcPlugin EtcRegistry) Down() error {
 		key = etcPlugin.Name + "/" + *etcPlugin.Address + ":" + strconv.FormatInt(int64(etcPlugin.Port), 10)
 	}
 
-	_, err := etcPlugin.client.Delete(ctx, key)
+	_, err := etcPlugin.client.Delete(context.TODO(), key)
 	if err != nil {
 		seelog.Error(err)
 	}
