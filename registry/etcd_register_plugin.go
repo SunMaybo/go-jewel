@@ -14,7 +14,6 @@ type EtcRegisterPlugin struct {
 func (plugin EtcRegisterPlugin) Open(injector *inject.Injector) error {
 	p := injector.Service(&JewelRegisterProperties{}).(JewelRegisterProperties)
 	etcPlugin := p.Registry.JewelPlugin.EtcdPlugin
-	plugin.client=etcPlugin
 	if etcPlugin.Enabled != nil && !*etcPlugin.Enabled {
 		return nil
 	}
@@ -29,6 +28,7 @@ func (plugin EtcRegisterPlugin) Open(injector *inject.Injector) error {
 		ip := getLocalIp()
 		etcPlugin.Address = &ip
 	}
+	plugin.client=etcPlugin
 	return etcPlugin.register()
 }
 func (plugin EtcRegisterPlugin) Health() error {
