@@ -52,12 +52,16 @@ func (jewel *Jewel) KingpinApp() *kingpin.Application {
 	return jewel.app
 }
 func (jewel *Jewel) AddBeanProperties(properties ... interface{}) *Jewel {
-	jewel.boot = jewel.boot.AddApplyCfg(properties)
+	for _, p := range properties {
+		jewel.boot = jewel.boot.AddApplyCfg(p)
+	}
 	return jewel
 }
 
-func (jewel *Jewel) AddBean(beans ... interface{}) *Jewel {
-	jewel.boot = jewel.boot.AddApply(beans)
+func (jewel *Jewel) AddBean(beans ...  interface{}) *Jewel {
+	for _, bean := range beans {
+		jewel.boot = jewel.boot.AddApply(bean)
+	}
 	return jewel
 }
 

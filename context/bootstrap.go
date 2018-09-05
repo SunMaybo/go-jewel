@@ -69,13 +69,13 @@ func (b *Boot) AddAsyncFun(fun func(injector *inject.Injector)) *Boot {
 }
 func checkPointer(pointer interface{}) {
 	if reflect.TypeOf(pointer).Kind() != reflect.Ptr {
-		log.Fatal("param must be pointer type")
+		log.Fatalf("param must be pointer type")
 	}
 }
 func (b *Boot) AddApplyCfg(pointers ... interface{}) *Boot {
 	//映射配置文件内容
-	for e := range pointers {
-		checkPointer(pointers[e])
+	for _, ptr := range pointers {
+		checkPointer(ptr)
 	}
 	b.cfgPointer = append(b.cfgPointer, pointers...)
 	return b
@@ -83,7 +83,6 @@ func (b *Boot) AddApplyCfg(pointers ... interface{}) *Boot {
 func (b *Boot) StartAndDir(dir string) (*Boot) {
 	b.cmd.defaultCmd(func() {
 		b.basePluginService()
-
 		b.pluginService()
 
 	})
