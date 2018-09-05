@@ -144,8 +144,6 @@ func (b *Boot) basePluginService() {
 			b.inject.ApplyWithName("rest."+name, restTemplate)
 		}
 	}
-	b.inject.ApplyWithName("plugin:base_plugin", &base)
-
 }
 func (b *Boot) http(fs []func(engine *gin.Engine)) {
 	var jewel JewelProperties
