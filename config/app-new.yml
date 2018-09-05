@@ -12,23 +12,6 @@ jewel:
             max_idle_conns: 10
             max_open_conns: 2
             show_sql: true
-   redis:
-      default:
-              addr: 54.255.249.22:6379
-              password: tokenup-staging-for-redis
-              db: 0
-              read_timeout: 5000
-              pool_size: 10
-              write_timeout: 5000
-      primary_redis:
-              addr: 54.255.249.22:6379
-              password: tokenup-staging-for-redis
-              db: 0
-              read_timeout: 5000
-              pool_size: 10
-              write_timeout: 5000
-              enabled: false
-
    mgo:
       default:
          address: 18.136.124.100:27017
@@ -38,6 +21,10 @@ jewel:
    rest:
       default:
          enabled: false
+   register:
+        etcd_plugin:
+               urls: http://localhost:2379
+               enabled: true
 
 
 

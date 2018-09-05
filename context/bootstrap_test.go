@@ -11,7 +11,7 @@ import (
 func TestBootStrap(t *testing.T) {
 	boot := NewInstance()
 	boot.AddFun(func(injector *inject.Injector) {
-		db := injector.ServiceByName("plugin:mysql.default").(gorm.DB)
+		db := injector.ServiceByName("mysql.default").(gorm.DB)
 		fmt.Print(db)
 	})
 	boot.StartAndDir("./../config")

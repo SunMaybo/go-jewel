@@ -3,7 +3,6 @@ package context
 import (
 	"github.com/gin-gonic/gin"
 	"fmt"
-	"encoding/json"
 	"time"
 	"github.com/cihub/seelog"
 	"net/http"
@@ -107,6 +106,11 @@ func (b *Boot) pluginService() {
 		b.inject.ApplyWithName("plugin:"+name, inter)
 	}
 }
+func (b *Boot) Close() {
+	for _, plugin := range b.plugins {
+		plugin.Close()
+	}
+}
 func (b *Boot) basePluginService() {
 	base := NewBasePlugin()
 	err := base.Open(b.GetInject())
@@ -117,30 +121,30 @@ func (b *Boot) basePluginService() {
 	}
 	if base.RedisDb != nil {
 		for name, client := range base.RedisDb {
-			b.inject.ApplyWithName("plugin:redis."+name, client)
+			b.inject.ApplyWithName("redis."+name, client)
 		}
 	}
 	if base.MysqlDb != nil {
 		for name, mysql := range base.MysqlDb {
-			b.inject.ApplyWithName("plugin:mysql."+name, mysql)
+			b.inject.ApplyWithName("mysql."+name, mysql)
 		}
 	}
 	if base.PostDb != nil {
 		for name, postgres := range base.PostDb {
-			b.inject.ApplyWithName("plugin:postgres."+name, postgres)
+			b.inject.ApplyWithName("postgres."+name, postgres)
 		}
 	}
 	if base.MgoDb != nil {
 		for name, postgres := range base.PostDb {
-			b.inject.ApplyWithName("plugin:mgo."+name, postgres)
+			b.inject.ApplyWithName("mgo."+name, postgres)
 		}
 	}
 	if base.RestTemplate != nil {
 		for name, restTemplate := range base.RestTemplate {
-			b.inject.ApplyWithName("plugin:rest."+name, restTemplate)
+			b.inject.ApplyWithName("rest."+name, restTemplate)
 		}
 	}
-	b.inject.Apply(&base)
+	b.inject.ApplyWithName("plugin:base_plugin", &base)
 
 }
 func (b *Boot) http(fs []func(engine *gin.Engine)) {
@@ -166,16 +170,6 @@ type Info struct {
 	Name     string `json:"name"`
 	Env      string `json:"env"`
 	BootTime string `json:"boot_time"`
-	Db       DbTx   `json:"db"`
-}
-
-type DbTx struct {
-	MysqlDb     string `json:"mysql_db"`
-	PostDb      string `json:"postgresql_db"`
-	SqlServerDb string `json:"sqlserver_db"`
-	Sqlite3Db   string `json:"sqlite3_db"`
-	MongodDb    string `json:"mongod_db"`
-	RedisDb     string `json:"redis_db"`
 }
 
 func (b *Boot) defaultRouter(engine *gin.Engine, env string, port int, bootTime string, name string) {
@@ -186,11 +180,7 @@ func (b *Boot) defaultRouter(engine *gin.Engine, env string, port int, bootTime 
 			BootTime: bootTime,
 			Name:     name,
 		}
-		buff, err := json.Marshal(info)
-		if err != nil {
-			seelog.Error(err)
-		}
-		context.String(http.StatusOK, "%v", string(buff))
+		context.JSON(http.StatusOK, info)
 	})
 	engine.GET("/healths", func(context *gin.Context) {
 		services := b.GetInject().ServiceByPrefixName("plugin:")
@@ -201,7 +191,7 @@ func (b *Boot) defaultRouter(engine *gin.Engine, env string, port int, bootTime 
 			plugin := service.(Plugin)
 			err := plugin.Health()
 			if err != nil {
-				context.JSON(http.StatusOK, gin.H{"status": "DOWN"})
+				context.JSON(http.StatusOK, gin.H{"status": "DOWN", "message": err.Error()})
 			}
 		}
 		context.JSON(http.StatusOK, gin.H{"status": "UP"})

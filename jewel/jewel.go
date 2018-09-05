@@ -5,6 +5,9 @@ import (
 	"os"
 	"github.com/SunMaybo/go-jewel/context"
 	"github.com/gin-gonic/gin"
+	"github.com/SunMaybo/jewel-inject/inject"
+	"go-jewel/registry"
+	"fmt"
 )
 
 type Jewel struct {
@@ -20,6 +23,10 @@ func NewHttp() *Jewel {
 		app:     kingpin.UsageTemplate(kingpin.DefaultUsageTemplate),
 		cmdFunc: make(map[string]func()),
 	}
+	jewel.boot.AddApplyCfg(&registry.JewelRegisterProperties{})
+	var plugin context.Plugin
+	plugin = registry.EtcRegisterPlugin{}
+	jewel.boot.AddPlugins(plugin)
 	jewel.cmd = append(jewel.cmd, jewel.app.Command("server", "Start a http server"))
 	return jewel
 }
@@ -55,12 +62,12 @@ func (jewel *Jewel) AddBean(beans ... interface{}) *Jewel {
 	return jewel
 }
 
-func (jewel *Jewel) AddAsyncFun(fun func()) *Jewel {
+func (jewel *Jewel) AddAsyncFun(fun func(injector *inject.Injector)) *Jewel {
 	jewel.boot = jewel.boot.AddAsyncFun(fun)
 	return jewel
 }
 
-func (jewel *Jewel) AddSyncFun(fun func()) *Jewel {
+func (jewel *Jewel) AddSyncFun(fun func(injector *inject.Injector)) *Jewel {
 	jewel.boot = jewel.boot.AddFun(fun)
 	return jewel
 }
@@ -69,6 +76,9 @@ func (jewel *Jewel) AddTask(name, cron string, fun func()) *Jewel {
 	return jewel
 }
 
+func (jewel *Jewel) AddPlugins(plugins ... context.Plugin) {
+	jewel.boot.AddPlugins(plugins...)
+}
 func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
 	for _, cmd := range jewel.cmd {
 		target := cmd.Flag("config", "The directory where the configuration files are located").Default("./config").String()
@@ -76,11 +86,13 @@ func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
 		if cmd.FullCommand() == c && c == "server" {
 			jewel.boot = jewel.boot.StartAndDir(*target)
 			jewel.boot.BindHttp(httpFun)
+			jewel.boot.Close()
 			return
 		} else if cmd.FullCommand() == c {
 			if fun, ok := jewel.cmdFunc[c]; ok {
 				jewel.boot = jewel.boot.StartAndDir(*target)
 				fun()
+				jewel.boot.Close()
 				return
 			}
 		}
@@ -96,6 +108,7 @@ func (jewel *Jewel) Start() {
 			if fun, ok := jewel.cmdFunc[c]; ok {
 				jewel.boot = jewel.boot.StartAndDir(*target)
 				fun()
+				jewel.boot.Close()
 				return
 			}
 
