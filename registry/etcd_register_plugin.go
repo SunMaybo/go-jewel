@@ -8,7 +8,7 @@ import (
 )
 
 type EtcRegisterPlugin struct {
-	client *EtcRegistry
+	Client *EtcRegistry
 }
 
 func (plugin EtcRegisterPlugin) Open(injector *inject.Injector) error {
@@ -24,11 +24,11 @@ func (plugin EtcRegisterPlugin) Open(injector *inject.Injector) error {
 	if etcPlugin.IsRefresh == nil {
 		etcPlugin.IsRefresh = new(int32)
 	}
-	if  etcPlugin.Address == nil {
+	if etcPlugin.Address == nil {
 		ip := getLocalIp()
 		etcPlugin.Address = &ip
 	}
-	plugin.client=etcPlugin
+	plugin.Client = etcPlugin
 	return etcPlugin.register()
 }
 func (plugin EtcRegisterPlugin) Health() error {
@@ -36,11 +36,11 @@ func (plugin EtcRegisterPlugin) Health() error {
 }
 func (plugin EtcRegisterPlugin) Close() {
 	seelog.Error("close etcd service register")
-	plugin.client.Down()
-	plugin.client.client.Close()
+	plugin.Client.Down()
+	plugin.Client.client.Close()
 }
 func (plugin EtcRegisterPlugin) Interface() (string, interface{}) {
-	return "etcd_register", plugin.client
+	return "etcd_register", plugin.Client
 }
 
 func getLocalIp() (IpAddr string) {
