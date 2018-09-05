@@ -59,7 +59,7 @@ type EtcRegistry struct {
 	client           *clientv3.Client
 }
 
-func (etcPlugin *EtcRegistry) refresh(id interface{}) {
+func (etcPlugin EtcRegistry) refresh(id interface{}) {
 	if atomic.LoadInt32(etcPlugin.IsRefresh) != 0 {
 		return
 	}
@@ -77,7 +77,7 @@ func (etcPlugin *EtcRegistry) refresh(id interface{}) {
 	}
 
 }
-func (etcPlugin *EtcRegistry) register() error {
+func (etcPlugin EtcRegistry) register() error {
 	cfg := clientv3.Config{}
 	if etcPlugin.Urls != nil {
 		cfg.Endpoints = strings.Split(*etcPlugin.Urls, ",")
@@ -120,7 +120,7 @@ func (etcPlugin *EtcRegistry) register() error {
 	}()
 	return nil
 }
-func (etcPlugin *EtcRegistry) Up() (interface{}, error) {
+func (etcPlugin EtcRegistry) Up() (interface{}, error) {
 	//register
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -150,7 +150,7 @@ func (etcPlugin *EtcRegistry) Up() (interface{}, error) {
 	seelog.Infof("successful registration to the %s", *etcPlugin.Urls)
 	return leaseResp.ID, nil
 }
-func (etcPlugin *EtcRegistry) Down() error {
+func (etcPlugin EtcRegistry) Down() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	var key string
