@@ -39,7 +39,7 @@ func (plugin EtcRegisterPlugin) Close() {
 	plugin.client.client.Close()
 }
 func (plugin EtcRegisterPlugin) Interface() (string, interface{}) {
-	return "plugin:etcd_register", plugin.client
+	return "etcd_register", plugin.client
 }
 
 func getLocalIp() (IpAddr string) {
