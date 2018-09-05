@@ -79,8 +79,8 @@ func (jewel *Jewel) AddPlugins(plugins ... context.Plugin) {
 	jewel.boot.AddPlugins(plugins...)
 }
 func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
+	target := jewel.app.Flag("config", "The directory where the configuration files are located").Default("./config").String()
 	for _, cmd := range jewel.cmd {
-		target := cmd.Flag("config", "The directory where the configuration files are located").Default("./config").String()
 		c := kingpin.MustParse(jewel.app.Parse(os.Args[1:]))
 		if cmd.FullCommand() == c && c == "server" {
 			jewel.boot = jewel.boot.StartAndDir(*target)
@@ -109,8 +109,8 @@ func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
 }
 
 func (jewel *Jewel) Start() {
+	target := jewel.app.Flag("config", "The directory where the configuration files are located").Default("./config").String()
 	for _, cmd := range jewel.cmd {
-		target := cmd.Flag("config", "The directory where the configuration files are located").Default("./config").String()
 		c := kingpin.MustParse(jewel.app.Parse(os.Args[1:]))
 		if cmd.FullCommand() == c {
 			if fun, ok := jewel.cmdFunc[c]; ok {
