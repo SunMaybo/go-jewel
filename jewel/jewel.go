@@ -92,7 +92,7 @@ func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
 	c := kingpin.MustParse(jewel.app.Parse(os.Args[1:]))
 	for _, cmd := range cmdParams {
 		if cmd.Name == c && c == "server" {
-			jewel.boot = jewel.boot.Start(cmd.Param["dir"].(string), cmd.Param["env"].(string))
+			jewel.boot = jewel.boot.Start(*cmd.Param["dir"].(*string), *cmd.Param["env"].(*string))
 			etcRegister := jewel.boot.GetInject().ServicePtrByName("plugin:etcd_register")
 			if etcRegister != nil {
 				reg := etcRegister.(*registry.EtcRegistry)
@@ -107,6 +107,7 @@ func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
 			return
 		} else if cmd.Name == c {
 			if fun, ok := jewel.cmdFunc[c]; ok {
+				jewel.boot = jewel.boot.Start(*cmd.Param["dir"].(*string), *cmd.Param["env"].(*string))
 				fun()
 				jewel.boot.Close()
 				return
@@ -125,8 +126,8 @@ func (jewel *Jewel) getCmdParam() []CmdParam {
 			Param: make(map[string]interface{}),
 		}
 		cmdParam.Name = cmd.FullCommand()
-		cmdParam.Param["dir"] = *target
-		cmdParam.Param["env"] = *env
+		cmdParam.Param["dir"] = target
+		cmdParam.Param["env"] = env
 		cmdParams = append(cmdParams, cmdParam)
 	}
 	return cmdParams
@@ -138,7 +139,7 @@ func (jewel *Jewel) Start() {
 	for _, cmd := range cmdParams {
 		if cmd.Name == c {
 			if fun, ok := jewel.cmdFunc[c]; ok {
-				jewel.boot = jewel.boot.Start(cmd.Param["dir"].(string), cmd.Param["env"].(string))
+				jewel.boot = jewel.boot.Start(*cmd.Param["dir"].(*string), *cmd.Param["env"].(*string))
 				fun()
 				jewel.boot.Close()
 				return

@@ -121,6 +121,9 @@ loop:
 			}
 		}
 	}
-
-	return dir + "/" + name
+	if name != "" {
+		return dir + "/" + name
+	} else {
+		return ""
+	}
 }

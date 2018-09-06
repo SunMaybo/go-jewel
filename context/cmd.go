@@ -52,8 +52,9 @@ func (c *Cmd) Start(b *Boot, dir, env string) {
 		LoadEnvCfg(dir, env, v)
 	}
 	envFileName := LoadEnvFileName(dir, env)
-	properties.Load(envFileName, jewel)
-
+	if envFileName != "" {
+		properties.Load(envFileName, jewel)
+	}
 	b.inject.Apply(b.cfgPointer ...)
 	b.inject.Apply(jewel)
 
