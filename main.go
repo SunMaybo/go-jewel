@@ -3,7 +3,7 @@ package main
 import (
 
 	"github.com/gin-gonic/gin"
-	"go-jewel/jewel"
+	"github.com/SunMaybo/go-jewel/jewel"
 )
 
 func main() {
