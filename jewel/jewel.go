@@ -86,7 +86,7 @@ func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
 	for _, cmd := range jewel.cmd {
 		target := cmd.Flag("config", "The directory where the configuration files are located").Default("./config").String()
 		env := cmd.Flag("jewel.profiles.active", "The env where the configuration files are located").Default("beta").String()
-		c := kingpin.MustParse(jewel.app.Parse(os.Args[1:])
+		c := kingpin.MustParse(jewel.app.Parse(os.Args[1:]))
 		if cmd.FullCommand() == c && c == "server" {
 			jewel.boot = jewel.boot.Start(*target,*env)
 			etcRegister := jewel.boot.GetInject().ServicePtrByName("plugin:etcd_register")
