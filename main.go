@@ -1,16 +1,14 @@
 package main
 
 import (
-	"github.com/SunMaybo/go-jewel/jewel"
+	"go-jewel/jewel"
+	"github.com/gin-gonic/gin"
+	"github.com/SunMaybo/jewel-inject/inject"
 )
 
 func main() {
-	jewel := jewel.New()
-	jewel.Cmd("redis_start", "", func() {
-
+  jewel:=jewel.NewHttp()
+	jewel.HttpStart(func(router *gin.RouterGroup, injector *inject.Injector) {
+		
 	})
-	jewel.Cmd("start", "", func() {
-
-	})
-	jewel.Start()
 }

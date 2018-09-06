@@ -2,7 +2,6 @@ package context
 
 import (
 	"github.com/gin-gonic/gin"
-	"fmt"
 	"time"
 	"github.com/cihub/seelog"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"reflect"
 	"log"
 	"github.com/robfig/cron"
+	"html/template"
 )
 
 type Boot struct {
@@ -86,19 +86,19 @@ func (b *Boot) StartAndDir(dir string) (*Boot) {
 		b.pluginService()
 
 	})
-	b.cmd.Start(b, dir,"")
+	b.cmd.Start(b, dir, "")
 	return b
 }
-func (b *Boot) Start(dir,env string) (*Boot) {
+func (b *Boot) Start(dir, env string) (*Boot) {
 	b.cmd.defaultCmd(func() {
 		b.basePluginService()
 		b.pluginService()
 
 	})
-	b.cmd.Start(b, dir,env)
+	b.cmd.Start(b, dir, env)
 	return b
 }
-func (b *Boot) BindHttp(r ... func(engine *gin.Engine)) {
+func (b *Boot) BindHttp(r ... func(router *gin.RouterGroup, injector *inject.Injector)) {
 
 	b.cmd.httpCmd(func() {
 		b.http(r)
@@ -158,19 +158,34 @@ func (b *Boot) basePluginService() {
 	name, inter := base.Interface()
 	b.GetInject().ApplyWithName("plugin:"+name, inter)
 }
-func (b *Boot) http(fs []func(engine *gin.Engine)) {
+func (b *Boot) http(fs []func(router *gin.RouterGroup, injector *inject.Injector)) {
 	var jewel JewelProperties
 	jewel = b.GetInject().Service(&jewel).(JewelProperties)
-	if jewel.Jewel.GinMode != nil {
-		gin.SetMode(*jewel.Jewel.GinMode)
+	serverProperties := jewel.Jewel.Server
+	server, err := serverProperties.Create()
+	if err != nil {
+		log.Fatal(err)
+	}
+	engine := gin.Default()
+	if serverProperties.GinMode != nil {
+		gin.SetMode(*serverProperties.GinMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	engine := gin.Default()
-	b.defaultRouter(engine, jewel.Jewel.Profiles.Active, jewel.Jewel.Port, time.Now().String(), jewel.Jewel.Name)
+	var router *gin.RouterGroup
+	if serverProperties.ContextPath != nil {
+		router = engine.Group(*serverProperties.ContextPath)
+	} else {
+		router = engine.Group("/")
+	}
+	if serverProperties.Templates != nil {
+		engine.SetHTMLTemplate(template.New(*serverProperties.Templates))
+	}
+	b.defaultRouter(router, jewel.Jewel.Profiles.Active, *serverProperties.Port, time.Now().String(), jewel.Jewel.Name)
 	registeries(fs)
-	load(engine)
-	err := engine.Run(fmt.Sprintf(":%d", + jewel.Jewel.Port))
+	load(router)
+	server.Handler = engine
+	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -183,10 +198,10 @@ type Info struct {
 	BootTime string `json:"boot_time"`
 }
 
-func (b *Boot) defaultRouter(engine *gin.Engine, env string, port int, bootTime string, name string) {
+func (b *Boot) defaultRouter(engine *gin.RouterGroup, env string, port int64, bootTime string, name string) {
 	engine.GET("/info", func(context *gin.Context) {
 		info := Info{
-			Port:     port,
+			Port:     int(port),
 			Env:      env,
 			BootTime: bootTime,
 			Name:     name,

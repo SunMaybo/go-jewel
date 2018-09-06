@@ -2,7 +2,6 @@ jewel:
    name: tokenup-worker
    profiles:
           active: new
-   gin_mode: debug
 
 
 

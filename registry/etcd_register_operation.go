@@ -3,16 +3,28 @@ package registry
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"go-jewel/context"
+	"github.com/SunMaybo/jewel-inject/inject"
 )
 
 type EtcRegisterOperation struct {
 	Registry Registry
 }
 
-func (op EtcRegisterOperation) HttpBindOp(engine *gin.Engine) {
-	engine.GET("/start", op.Up)
-	engine.GET("/stop", op.Down)
-	engine.GET("/services", op.Services)
+func (op EtcRegisterOperation) HttpBindOp(router *gin.RouterGroup, injector *inject.Injector) {
+	jewel := injector.Service(&context.JewelProperties{}).(context.JewelProperties)
+	manager := jewel.Jewel.Server.Manager
+	var r *gin.RouterGroup
+	if manager.Enabled != nil && *manager.Enabled {
+		accounts := make(gin.Accounts)
+		accounts[*manager.User] = *manager.Password
+		r = router.Group("admin", gin.BasicAuth(accounts))
+	} else {
+		r = router.Group("admin")
+	}
+	r.GET("/start", op.Up)
+	r.GET("/stop", op.Down)
+	r.GET("/services", op.Services)
 }
 
 func (op EtcRegisterOperation) Up(context *gin.Context) {

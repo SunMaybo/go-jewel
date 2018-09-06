@@ -43,7 +43,9 @@ func (c *Cmd) Start(b *Boot, dir, env string) {
 	fileName := LoadFileName(dir)
 	jewel := &JewelProperties{}
 	properties.Load(fileName, jewel)
-	if env != "" {
+	if env == "" {
+		env = jewel.Jewel.Profiles.Active
+	} else {
 		jewel.Jewel.Profiles.Active = env
 	}
 	NewLogger(dir + "/log.xml")
@@ -61,7 +63,7 @@ func (c *Cmd) Start(b *Boot, dir, env string) {
 	fmt.Println("=============================================================")
 	fmt.Printf("             project:  %s                        \n", jewel.Jewel.Name)
 	fmt.Printf("         environment:  %s                    \n", jewel.Jewel.Profiles.Active)
-	fmt.Printf("                port:  %d                           \n", jewel.Jewel.Port)
+	fmt.Printf("                port:  %d                           \n", *jewel.Jewel.Server.Port)
 	fmt.Println("=============================================================")
 
 	c.Cmd["default"]() //默认的方法

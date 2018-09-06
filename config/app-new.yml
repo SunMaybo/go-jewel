@@ -1,7 +1,8 @@
 jewel:
    name: tokenup-worker-www
-   port: 8080
-
+   server:
+      port: 8080
+      gin_mode: debug
    mgo:
       default:
          address: 18.136.124.100:27017

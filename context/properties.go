@@ -14,6 +14,8 @@ import (
 	"crypto/tls"
 	"gopkg.in/mgo.v2"
 	"github.com/SunMaybo/jewel-template/template/rest"
+	"net/http"
+	"strconv"
 )
 
 type SqlDataSource struct {
@@ -193,6 +195,76 @@ type RestProperties struct {
 	Enabled            *bool   `json:"enabled" yaml:"enabled" xml:"enabled"`
 }
 
+type Manager struct {
+	User     *string `json:"user" yaml:"user" xml:"user"`
+	Password *string `json:"password" yaml:"password" xml:"password"`
+	Enabled  *bool   `json:"enabled" yaml:"enabled" xml:"enabled"`
+}
+
+type ServerProperties struct {
+
+	GinMode *string `json:"gin_mode" yaml:"gin_mode" xml:"gin_mode"`
+
+	ContextPath *string `json:"context_path" yaml:"context_path" xml:"context_path"`
+
+	Port *int64 `json:"port" yaml:"port" xml:"port"`
+
+	Templates *string `json:"templates" yaml:"templates" xml:"templates"`
+
+	EnableTls *bool `json:"enable_tls" yaml:"enable_tls" xml:"enable_tls"`
+
+	X509KeyPairServerPem *string `json:"x509_key_pair_server_pem" yaml:"x509_key_pair_server_pem" xml:"x509_key_pair_server_pem"`
+
+	X509KeyPairServerKey *string `json:"x509_key_pair_server_key" yaml:"x509_key_pair_server_key" xml:"x509_key_pair_server_key"`
+
+	ReadTimeout *int64 `json:"read_timeout" yaml:"read_timeout" xml:"read_timeout"`
+
+	ReadHeaderTimeout *int64 `json:"read_header_timeout" yaml:"read_header_timeout" xml:"read_header_timeout"`
+
+	WriteTimeout *int64 `json:"write_timeout" yaml:"write_timeout" xml:"write_timeout"`
+
+	IdleTimeout *int64 `json:"idle_timeout" yaml:"idle_timeout" xml:"idle_timeout"`
+
+	MaxHeaderBytes *int `json:"max_header_bytes" yaml:"max_header_bytes" xml:"max_header_bytes"`
+
+	Manager Manager `json:"manager" yaml:"manager" xml:"max_header_bytes"`
+}
+
+func (serverProperties *ServerProperties) Create() (*http.Server, error) {
+	server := &http.Server{}
+	if serverProperties.Port != nil {
+		server.Addr = ":" + strconv.FormatInt(*serverProperties.Port, 10)
+	}
+	if serverProperties.IdleTimeout != nil {
+		server.IdleTimeout = time.Duration(*serverProperties.IdleTimeout * 1000000)
+	}
+	if serverProperties.ReadTimeout != nil {
+		server.ReadTimeout = time.Duration(*serverProperties.ReadTimeout * 1000000)
+	}
+	if serverProperties.WriteTimeout != nil {
+		server.WriteTimeout = time.Duration(*serverProperties.WriteTimeout * 1000000)
+	}
+	if serverProperties.ReadHeaderTimeout != nil {
+		server.ReadHeaderTimeout = time.Duration(*serverProperties.ReadHeaderTimeout * 1000000)
+	}
+	if serverProperties.MaxHeaderBytes != nil {
+		server.MaxHeaderBytes = *serverProperties.MaxHeaderBytes
+	}
+	if serverProperties.EnableTls != nil && *serverProperties.EnableTls {
+		crt, err := tls.LoadX509KeyPair(*serverProperties.X509KeyPairServerPem, *serverProperties.X509KeyPairServerKey)
+		if err != nil {
+			return server, err
+		}
+		tlsConfig := &tls.Config{}
+		tlsConfig.Certificates = []tls.Certificate{crt}
+		// Time returns the current time as the number of seconds since the epoch.
+		// If Time is nil, TLS uses time.Now.
+		tlsConfig.Time = time.Now
+		server.TLSConfig = tlsConfig
+	}
+	return server, nil
+}
+
 func (restOptions *RestProperties) Create() (*rest.RestTemplate, error) {
 	config := rest.ClientConfig{}
 	if restOptions.MaxIdleConns != nil {
@@ -226,11 +298,10 @@ func (restOptions *RestProperties) Create() (*rest.RestTemplate, error) {
 
 type JewelProperties struct {
 	Jewel struct {
-		Name    string  `json:"name" yaml:"name" xml:"name"`
-		Port    int     `json:"port" yaml:"port" xml:"port"`
-		GinMode *string `json:"gin_mode" yaml:"gin_mode" xml:"gin_mode"`
+		Name   string            `json:"name" yaml:"name" xml:"name"`
+		Server ServerProperties `json:"server" yaml:"server" xml:"server"`
 		Profiles struct {
-			Active string `json:"active"`
+			Active string `yaml:"active" xml:"active" json:"active"`
 		} `json:"profiles" yaml:"profiles" xml:"profiles"`
 		MySql    map[string]SqlDataSource   `json:"mysql" yaml:"mysql" xml:"mysql"`
 		Postgres map[string]SqlDataSource   `json:"postgres" yaml:"postgres" xml:"postgres"`

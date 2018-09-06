@@ -3,17 +3,18 @@ package context
 import (
 	"github.com/gin-gonic/gin"
 	"container/list"
+	"github.com/SunMaybo/jewel-inject/inject"
 )
 
 var array = list.New()
 
-func load(engine *gin.Engine) {
+func load(router *gin.RouterGroup) {
 
 	for e := array.Front(); e != nil; e = e.Next() {
-		e.Value.(func(engine *gin.Engine))(engine)
+		e.Value.(func(engine *gin.RouterGroup, injector *inject.Injector))(router, nil)
 	}
 }
-func registeries(fs []func(engine *gin.Engine)) {
+func registeries(fs []func(router *gin.RouterGroup, injector *inject.Injector)) {
 	if fs == nil {
 		return
 	}
@@ -24,7 +25,7 @@ func registeries(fs []func(engine *gin.Engine)) {
 
 	}
 }
-func register(fun func(engine *gin.Engine)) {
+func register(fun func(engine *gin.RouterGroup, injector *inject.Injector)) {
 	if fun == nil {
 		return
 	}
