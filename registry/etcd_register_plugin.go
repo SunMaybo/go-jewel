@@ -19,7 +19,7 @@ func (plugin *EtcRegisterPlugin) Open(injector *inject.Injector) error {
 	}
 	jewel := injector.Service(&context.JewelProperties{}).(context.JewelProperties)
 	etcPlugin.Name = jewel.Jewel.Name
-	etcPlugin.Port = jewel.Jewel.Port
+	etcPlugin.Port = int(*jewel.Jewel.Server.Port)
 
 	if etcPlugin.IsRefresh == nil {
 		etcPlugin.IsRefresh = new(int32)

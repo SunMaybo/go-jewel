@@ -183,7 +183,7 @@ func (b *Boot) http(fs []func(router *gin.RouterGroup, injector *inject.Injector
 	}
 	b.defaultRouter(router, jewel.Jewel.Profiles.Active, *serverProperties.Port, time.Now().String(), jewel.Jewel.Name)
 	registeries(fs)
-	load(router)
+	load(router,b.GetInject())
 	server.Handler = engine
 	err = server.ListenAndServe()
 	if err != nil {
