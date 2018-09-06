@@ -16,6 +16,11 @@ type Jewel struct {
 	cmdFunc map[string]func()
 }
 
+type CmdParam struct {
+	Param map[string]interface{}
+	Name  string
+}
+
 func NewHttp() *Jewel {
 	jewel := &Jewel{
 		boot:    context.NewInstance(),
@@ -83,12 +88,11 @@ func (jewel *Jewel) AddPlugins(plugins ... context.Plugin) {
 	jewel.boot.AddPlugins(plugins...)
 }
 func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
-	for _, cmd := range jewel.cmd {
-		target := cmd.Flag("config", "The directory where the configuration files are located").Default("./config").String()
-		env := cmd.Flag("jewel.profiles.active", "The env where the configuration files are located").Default("beta").String()
-		c := kingpin.MustParse(jewel.app.Parse(os.Args[1:]))
-		if cmd.FullCommand() == c && c == "server" {
-			jewel.boot = jewel.boot.Start(*target, *env)
+	cmdParams := jewel.getCmdParam()
+	c := kingpin.MustParse(jewel.app.Parse(os.Args[1:]))
+	for _, cmd := range cmdParams {
+		if cmd.Name == c && c == "server" {
+			jewel.boot = jewel.boot.Start(cmd.Param["dir"].(string), cmd.Param["env"].(string))
 			etcRegister := jewel.boot.GetInject().ServicePtrByName("plugin:etcd_register")
 			if etcRegister != nil {
 				reg := etcRegister.(*registry.EtcRegistry)
@@ -101,9 +105,8 @@ func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
 			}
 			jewel.boot.Close()
 			return
-		} else if cmd.FullCommand() == c {
+		} else if cmd.Name == c {
 			if fun, ok := jewel.cmdFunc[c]; ok {
-				jewel.boot = jewel.boot.Start(*target, *env)
 				fun()
 				jewel.boot.Close()
 				return
@@ -113,12 +116,29 @@ func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
 	}
 }
 
-func (jewel *Jewel) Start() {
+func (jewel *Jewel) getCmdParam() []CmdParam {
+	var cmdParams []CmdParam
 	for _, cmd := range jewel.cmd {
-		c := kingpin.MustParse(jewel.app.Parse(os.Args[1:]))
-		if cmd.FullCommand() == c {
+		target := cmd.Flag("config", "The directory where the configuration files are located").Default("./config").String()
+		env := cmd.Flag("jewel.profiles.active", "The env where the configuration files are located").Default("beta").String()
+		cmdParam := CmdParam{
+			Param: make(map[string]interface{}),
+		}
+		cmdParam.Name = cmd.FullCommand()
+		cmdParam.Param["dir"] = *target
+		cmdParam.Param["env"] = *env
+		cmdParams = append(cmdParams, cmdParam)
+	}
+	return cmdParams
+}
+
+func (jewel *Jewel) Start() {
+	cmdParams := jewel.getCmdParam()
+	c := kingpin.MustParse(jewel.app.Parse(os.Args[1:]))
+	for _, cmd := range cmdParams {
+		if cmd.Name == c {
 			if fun, ok := jewel.cmdFunc[c]; ok {
-				jewel.boot = jewel.boot.Start(*target, *env)
+				jewel.boot = jewel.boot.Start(cmd.Param["dir"].(string), cmd.Param["env"].(string))
 				fun()
 				jewel.boot.Close()
 				return
