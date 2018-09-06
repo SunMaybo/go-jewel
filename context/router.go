@@ -8,10 +8,10 @@ import (
 
 var array = list.New()
 
-func load(router *gin.RouterGroup) {
+func load(router *gin.RouterGroup, injector *inject.Injector) {
 
 	for e := array.Front(); e != nil; e = e.Next() {
-		e.Value.(func(engine *gin.RouterGroup, injector *inject.Injector))(router, nil)
+		e.Value.(func(engine *gin.RouterGroup, injector *inject.Injector))(router, injector)
 	}
 }
 func registeries(fs []func(router *gin.RouterGroup, injector *inject.Injector)) {
