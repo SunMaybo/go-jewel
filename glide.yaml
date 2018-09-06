@@ -17,6 +17,9 @@ import:
 - package: github.com/cihub/seelog
   version: ~2.6.0
 - package: github.com/gin-gonic/gin
+  version: ~1.3.0
+  subpackages:
+  - json
 - package: github.com/go-redis/redis
   version: ~6.14.1
 - package: github.com/jinzhu/gorm
