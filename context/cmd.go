@@ -39,6 +39,7 @@ func (c *Cmd) Start(b *Boot, dir, env string) {
 	fmt.Println("	\\______/              \\______/")
 	fmt.Println("    ::  go-jewel  ::  (V2.0.1)")
 	properties := Properties{}
+	dir = GetCurrentDirectory(dir)
 	fileName := LoadFileName(dir)
 	jewel := &JewelProperties{}
 	properties.Load(fileName, jewel)

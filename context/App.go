@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"strings"
 	"log"
+	"os"
+	"github.com/cihub/seelog"
 )
 
 var suffixCfgName = []string{"yml", "yaml", "xml", "json"}
@@ -29,6 +31,20 @@ loop:
 		app.Load(dir + "/" + name)
 	}
 	return app
+}
+func GetCurrentDirectory(dir string) string {
+	pwd, err := os.Getwd()
+	if err != nil {
+		seelog.Error(err)
+		os.Exit(1)
+	}
+	if dir == "" {
+		return pwd
+	}
+	if strings.HasPrefix(dir, ".") {
+		return pwd + "/" + dir
+	}
+	return dir
 }
 
 func LoadFileName(dir string) string {
