@@ -3,6 +3,10 @@ jewel:
    server:
       port: 8080
       gin_mode: debug
+      manager:
+         enabled: true
+         user: test
+         password: test
    mgo:
       default:
          address: 18.136.124.100:27017
