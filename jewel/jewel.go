@@ -83,11 +83,12 @@ func (jewel *Jewel) AddPlugins(plugins ... context.Plugin) {
 	jewel.boot.AddPlugins(plugins...)
 }
 func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
-	target := jewel.app.Flag("config", "The directory where the configuration files are located").Default("./config").String()
 	for _, cmd := range jewel.cmd {
-		c := kingpin.MustParse(jewel.app.Parse(os.Args[1:]))
+		target := cmd.Flag("config", "The directory where the configuration files are located").Default("./config").String()
+		env := cmd.Flag("jewel.profiles.active", "The env where the configuration files are located").Default("beta").String()
+		c := kingpin.MustParse(jewel.app.Parse(os.Args[1:])
 		if cmd.FullCommand() == c && c == "server" {
-			jewel.boot = jewel.boot.StartAndDir(*target)
+			jewel.boot = jewel.boot.Start(*target,*env)
 			etcRegister := jewel.boot.GetInject().ServicePtrByName("plugin:etcd_register")
 			if etcRegister != nil {
 				reg := etcRegister.(*registry.EtcRegistry)
@@ -102,7 +103,7 @@ func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
 			return
 		} else if cmd.FullCommand() == c {
 			if fun, ok := jewel.cmdFunc[c]; ok {
-				jewel.boot = jewel.boot.StartAndDir(*target)
+				jewel.boot = jewel.boot.Start(*target,*env)
 				fun()
 				jewel.boot.Close()
 				return
@@ -113,12 +114,13 @@ func (jewel *Jewel) HttpStart(httpFun func(engine *gin.Engine)) {
 }
 
 func (jewel *Jewel) Start() {
-	target := jewel.app.Flag("config", "The directory where the configuration files are located").Default("./config").String()
 	for _, cmd := range jewel.cmd {
+		target := cmd.Flag("config", "The directory where the configuration files are located").Default("./config").String()
+		env := cmd.Flag("jewel.profiles.active", "The env where the configuration files are located").Default("beta").String()
 		c := kingpin.MustParse(jewel.app.Parse(os.Args[1:]))
 		if cmd.FullCommand() == c {
 			if fun, ok := jewel.cmdFunc[c]; ok {
-				jewel.boot = jewel.boot.StartAndDir(*target)
+				jewel.boot = jewel.boot.Start(*target,*env)
 				fun()
 				jewel.boot.Close()
 				return

@@ -86,7 +86,16 @@ func (b *Boot) StartAndDir(dir string) (*Boot) {
 		b.pluginService()
 
 	})
-	b.cmd.StartAndDir(b, dir)
+	b.cmd.Start(b, dir,"")
+	return b
+}
+func (b *Boot) Start(dir,env string) (*Boot) {
+	b.cmd.defaultCmd(func() {
+		b.basePluginService()
+		b.pluginService()
+
+	})
+	b.cmd.Start(b, dir,env)
 	return b
 }
 func (b *Boot) BindHttp(r ... func(engine *gin.Engine)) {

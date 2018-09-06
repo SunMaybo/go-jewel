@@ -25,7 +25,7 @@ func (c *Cmd) defaultCmd(fun func()) {
 func (c *Cmd) httpCmd(fun func()) {
 	c.Cmd["http"] = fun
 }
-func (c *Cmd) StartAndDir(b *Boot, dir string) {
+func (c *Cmd) Start(b *Boot, dir, env string) {
 	fmt.Println("                                                                          /$$")
 	fmt.Println("                                                                          | $$")
 	fmt.Println("          /$$$$$$   /$$$$$$          /$$  /$$$$$$  /$$  /$$  /$$  /$$$$$$ | $$")
@@ -42,7 +42,9 @@ func (c *Cmd) StartAndDir(b *Boot, dir string) {
 	fileName := LoadFileName(dir)
 	jewel := &JewelProperties{}
 	properties.Load(fileName, jewel)
-	env := jewel.Jewel.Profiles.Active
+	if env != "" {
+		jewel.Jewel.Profiles.Active = env
+	}
 	NewLogger(dir + "/log.xml")
 	for _, v := range b.cfgPointer {
 		LoadCfg(dir, v)
