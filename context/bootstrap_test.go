@@ -15,7 +15,4 @@ func TestBootStrap(t *testing.T) {
 		fmt.Print(db)
 	})
 	boot.StartAndDir("./../config")
-	boot.BindHttp(func(engine *gin.Engine) {
-
-	})
 }
