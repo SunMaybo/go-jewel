@@ -2,7 +2,6 @@ package context
 
 import (
 	"testing"
-	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"fmt"
 	"github.com/SunMaybo/jewel-inject/inject"
