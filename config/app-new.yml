@@ -20,7 +20,7 @@ jewel:
         etcd_plugin:
                urls: http://localhost:2379
                enabled: true
-               refresh_timeout: 3000
+               refresh_timeout: 30000
 
 
 
