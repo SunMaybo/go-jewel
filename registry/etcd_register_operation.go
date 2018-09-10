@@ -3,7 +3,7 @@ package registry
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"go-jewel/context"
+	"github.com/SunMaybo/go-jewel/context"
 	"github.com/SunMaybo/jewel-inject/inject"
 )
 
