@@ -11,6 +11,7 @@ import (
 	"log"
 	"github.com/robfig/cron"
 	"html/template"
+	"github.com/SunMaybo/go-jewel/prometheus"
 )
 
 type Boot struct {
@@ -181,9 +182,10 @@ func (b *Boot) http(fs []func(router *gin.RouterGroup, injector *inject.Injector
 	if serverProperties.Templates != nil {
 		engine.SetHTMLTemplate(template.New(*serverProperties.Templates))
 	}
+	b.metricsRouter(jewel.Jewel.Server.Manager, router)
 	b.defaultRouter(router, jewel.Jewel.Profiles.Active, *serverProperties.Port, time.Now().String(), jewel.Jewel.Name)
 	registeries(fs)
-	load(router,b.GetInject())
+	load(router, b.GetInject())
 	server.Handler = engine
 	err = server.ListenAndServe()
 	if err != nil {
@@ -196,6 +198,19 @@ type Info struct {
 	Name     string `json:"name"`
 	Env      string `json:"env"`
 	BootTime string `json:"boot_time"`
+}
+
+func (b *Boot) metricsRouter(manager Manager, router *gin.RouterGroup) {
+	var r *gin.RouterGroup
+	if manager.Enabled != nil && *manager.Enabled {
+		accounts := make(gin.Accounts)
+		accounts[*manager.User] = *manager.Password
+		r = router.Group("admin", gin.BasicAuth(accounts))
+	} else {
+		r = router.Group("admin")
+	}
+	p := prometheus.NewPrometheus("gin")
+	p.Use(r)
 }
 
 func (b *Boot) defaultRouter(engine *gin.RouterGroup, env string, port int64, bootTime string, name string) {

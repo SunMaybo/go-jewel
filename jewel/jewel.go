@@ -24,7 +24,7 @@ type CmdParam struct {
 func NewHttp() *Jewel {
 	jewel := &Jewel{
 		boot:    context.NewInstance(),
-		app:     kingpin.UsageTemplate(kingpin.ManPageTemplate),
+		app:     kingpin.UsageTemplate(kingpin.DefaultUsageTemplate),
 		cmdFunc: make(map[string]func()),
 	}
 	jewel.boot.AddApplyCfg(&registry.JewelRegisterProperties{})
