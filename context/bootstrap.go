@@ -182,7 +182,6 @@ func (b *Boot) http(fs []func(router *gin.RouterGroup, injector *inject.Injector
 	if serverProperties.Templates != nil {
 		engine.SetHTMLTemplate(template.New(*serverProperties.Templates))
 	}
-	b.metricsRouter(jewel.Jewel.Server.Manager, router)
 	b.defaultRouter(router, jewel.Jewel.Profiles.Active, *serverProperties.Port, time.Now().String(), jewel.Jewel.Name)
 	registeries(fs)
 	load(router, b.GetInject())
@@ -200,19 +199,6 @@ type Info struct {
 	BootTime string `json:"boot_time"`
 }
 
-func (b *Boot) metricsRouter(manager Manager, router *gin.RouterGroup) {
-	var r *gin.RouterGroup
-	if manager.Enabled != nil && *manager.Enabled {
-		accounts := make(gin.Accounts)
-		accounts[*manager.User] = *manager.Password
-		r = router.Group("admin", gin.BasicAuth(accounts))
-	} else {
-		r = router.Group("admin")
-	}
-	p := prometheus.NewPrometheus("gin")
-	p.Use(r)
-}
-
 func (b *Boot) defaultRouter(engine *gin.RouterGroup, env string, port int64, bootTime string, name string) {
 	engine.GET("/info", func(context *gin.Context) {
 		info := Info{
@@ -223,6 +209,10 @@ func (b *Boot) defaultRouter(engine *gin.RouterGroup, env string, port int64, bo
 		}
 		context.JSON(http.StatusOK, info)
 	})
+
+	p := prometheus.NewPrometheus("gin")
+	p.Use(engine)
+
 	engine.GET("/healths", func(context *gin.Context) {
 		services := b.GetInject().ServiceByPrefixName("plugin:")
 		if services == nil {

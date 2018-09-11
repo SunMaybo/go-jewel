@@ -336,9 +336,9 @@ func (p *Prometheus) Use(router *gin.RouterGroup) {
 }
 
 // UseWithAuth adds the middleware to a gin engine with BasicAuth.
-func (p *Prometheus) UseWithAuth(e *gin.Engine, accounts gin.Accounts) {
-	e.Use(p.handlerFunc())
-	p.setMetricsPathWithAuth(e, accounts)
+func (p *Prometheus) UseWithAuth(router *gin.RouterGroup, accounts gin.Accounts) {
+	router.Use(p.handlerFunc())
+	p.setMetricsPathWithAuth(router, accounts)
 }
 
 func (p *Prometheus) handlerFunc() gin.HandlerFunc {
