@@ -13,23 +13,23 @@ type EtcRegisterPlugin struct {
 
 func (plugin *EtcRegisterPlugin) Open(injector *inject.Injector) error {
 	p := injector.Service(&JewelRegisterProperties{}).(JewelRegisterProperties)
-	etcPlugin := p.Registry.JewelPlugin.EtcdPlugin
-	if etcPlugin.Enabled != nil && !*etcPlugin.Enabled {
+	jewelPlugin := p.Registry.JewelPlugin
+	if jewelPlugin == nil || jewelPlugin.EtcdPlugin == nil || jewelPlugin.EtcdPlugin.Enabled == nil || (jewelPlugin.EtcdPlugin.Enabled != nil && !*jewelPlugin.EtcdPlugin.Enabled) {
 		return nil
 	}
 	jewel := injector.Service(&context.JewelProperties{}).(context.JewelProperties)
-	etcPlugin.Name = jewel.Jewel.Name
-	etcPlugin.Port = int(*jewel.Jewel.Server.Port)
+	jewelPlugin.EtcdPlugin.Name = jewel.Jewel.Name
+	jewelPlugin.EtcdPlugin.Port = int(*jewel.Jewel.Server.Port)
 
-	if etcPlugin.IsRefresh == nil {
-		etcPlugin.IsRefresh = new(int32)
+	if jewelPlugin.EtcdPlugin.IsRefresh == nil {
+		jewelPlugin.EtcdPlugin.IsRefresh = new(int32)
 	}
-	if etcPlugin.Address == nil {
+	if jewelPlugin.EtcdPlugin.Address == nil {
 		ip := getLocalIp()
-		etcPlugin.Address = &ip
+		jewelPlugin.EtcdPlugin.Address = &ip
 	}
-	plugin.Client = etcPlugin
-	return etcPlugin.register()
+	plugin.Client = jewelPlugin.EtcdPlugin
+	return jewelPlugin.EtcdPlugin.register()
 }
 func (plugin *EtcRegisterPlugin) Health() error {
 	return nil
