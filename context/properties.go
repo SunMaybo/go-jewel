@@ -202,7 +202,6 @@ type Manager struct {
 }
 
 type ServerProperties struct {
-
 	GinMode *string `json:"gin_mode" yaml:"gin_mode" xml:"gin_mode"`
 
 	ContextPath *string `json:"context_path" yaml:"context_path" xml:"context_path"`
@@ -298,7 +297,7 @@ func (restOptions *RestProperties) Create() (*rest.RestTemplate, error) {
 
 type JewelProperties struct {
 	Jewel struct {
-		Name   string            `json:"name" yaml:"name" xml:"name"`
+		Name   string           `json:"name" yaml:"name" xml:"name"`
 		Server ServerProperties `json:"server" yaml:"server" xml:"server"`
 		Profiles struct {
 			Active string `yaml:"active" xml:"active" json:"active"`
