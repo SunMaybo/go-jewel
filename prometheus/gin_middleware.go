@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/client_golang/prometheus"
+	"strings"
 )
 
 var defaultMetricPath = "/metrics"
@@ -23,7 +24,7 @@ var reqCnt = &Metric{
 	Name:        "requests_total",
 	Description: "How many HTTP requests processed, partitioned by status code and HTTP method.",
 	Type:        "counter_vec",
-	Args:        []string{"code", "method", "handler", "host", "url"}}
+	Args:        []string{"code", "method", "handler", "host", "url","remoteAddr"}}
 
 var reqDur = &Metric{
 	ID:          "reqDur",
@@ -359,7 +360,7 @@ func (p *Prometheus) handlerFunc() gin.HandlerFunc {
 
 		p.reqDur.Observe(elapsed)
 		url := p.ReqCntURLLabelMappingFn(c)
-		p.reqCnt.WithLabelValues(status, c.Request.Method, c.HandlerName(), c.Request.Host, url).Inc()
+		p.reqCnt.WithLabelValues(status, c.Request.Method, c.HandlerName(), c.Request.Host, url,strings.Split(c.Request.RemoteAddr,":")[0]).Inc()
 		p.reqSz.Observe(float64(reqSz))
 		p.resSz.Observe(resSz)
 	}

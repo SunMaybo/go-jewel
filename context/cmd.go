@@ -63,7 +63,9 @@ func (c *Cmd) Start(b *Boot, dir, env string) {
 	fmt.Println("=============================================================")
 	fmt.Printf("             project:  %s                        \n", jewel.Jewel.Name)
 	fmt.Printf("         environment:  %s                    \n", jewel.Jewel.Profiles.Active)
-	fmt.Printf("                port:  %d                           \n", *jewel.Jewel.Server.Port)
+	if jewel.Jewel.Server.Port != nil {
+		fmt.Printf("                port:  %d                           \n", *jewel.Jewel.Server.Port)
+	}
 	fmt.Println("=============================================================")
 
 	c.Cmd["default"]() //默认的方法
