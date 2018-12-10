@@ -146,8 +146,8 @@ func (b *Boot) basePluginService() {
 		}
 	}
 	if base.MgoDb != nil {
-		for name, postgres := range base.PostDb {
-			b.inject.ApplyWithName("mgo."+name, postgres)
+		for name, mgo := range base.MgoDb {
+			b.inject.ApplyWithName("mgo."+name, mgo)
 		}
 	}
 	if base.RestTemplate != nil {
