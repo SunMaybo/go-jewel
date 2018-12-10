@@ -208,10 +208,8 @@ func (b *Boot) defaultRouter(engine *gin.RouterGroup, env string, port int64, bo
 		}
 		context.JSON(http.StatusOK, info)
 	})
-
 	p := prometheus.NewPrometheus("gin")
 	p.Use(engine)
-	b.GetInject().RegisterService(p)
 	engine.GET("/healths", func(context *gin.Context) {
 		services := b.GetInject().ServiceByPrefixName("plugin:")
 		if services == nil {

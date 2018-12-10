@@ -1,7 +1,7 @@
 jewel:
    name: tokenup-worker-www
    server:
-      port: 8080
+      port: 8088
       gin_mode: debug
       manager:
          enabled: true
@@ -20,7 +20,7 @@ jewel:
         etcd_plugin:
                urls: http://localhost:2379
                enabled: true
-               refresh_timeout: 30000
+               refresh_timeout: 90000
 
 
 
