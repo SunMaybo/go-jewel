@@ -282,7 +282,7 @@ func (restOptions *RestProperties) Create() (*rest.RestTemplate, error) {
 		config.SocketTimeout = 3 * time.Second
 	}
 	if restOptions.IdleConnTimeout != nil {
-		config.IdleConnTimeout = time.Duration(*restOptions.IdleConnTimeout)**time.Millisecond
+		config.IdleConnTimeout = time.Duration(*restOptions.IdleConnTimeout)*time.Millisecond
 	} else {
 		config.IdleConnTimeout = 10  *time.Millisecond
 	}
