@@ -277,14 +277,14 @@ func (restOptions *RestProperties) Create() (*rest.RestTemplate, error) {
 		config.ReplyCount = 3
 	}
 	if restOptions.SocketTimeout != nil {
-		config.SocketTimeout = time.Duration(*restOptions.SocketTimeout * 1000000)
+		config.SocketTimeout = time.Duration(*restOptions.SocketTimeout)*time.Millisecond
 	} else {
 		config.SocketTimeout = 3 * time.Second
 	}
 	if restOptions.IdleConnTimeout != nil {
-		config.IdleConnTimeout = time.Duration(*restOptions.IdleConnTimeout * 1000000)
+		config.IdleConnTimeout = time.Duration(*restOptions.IdleConnTimeout)**time.Millisecond
 	} else {
-		config.IdleConnTimeout = 10 * time.Second
+		config.IdleConnTimeout = 10  *time.Millisecond
 	}
 	if restOptions.Authorization != nil {
 		config.Authorization = *restOptions.Authorization
