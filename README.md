@@ -191,4 +191,3 @@ boot.JsonRpc().RegisterJsonRpc("test", func(name string, age float64, stu map[st
 ```
 注意: 函数的映射类型仅支持，string，float，map类型.
 
-## 例子
