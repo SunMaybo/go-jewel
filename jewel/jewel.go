@@ -6,7 +6,6 @@ import (
 	"github.com/SunMaybo/go-jewel/context"
 	"github.com/gin-gonic/gin"
 	"github.com/SunMaybo/jewel-inject/inject"
-	"github.com/SunMaybo/go-jewel/registry"
 )
 
 type Jewel struct {
@@ -27,9 +26,7 @@ func NewHttp() *Jewel {
 		app:     kingpin.UsageTemplate(kingpin.DefaultUsageTemplate),
 		cmdFunc: make(map[string]func()),
 	}
-	jewel.boot.AddApplyCfg(&registry.JewelRegisterProperties{})
 	var plugin context.Plugin
-	plugin = &registry.EtcRegisterPlugin{}
 	jewel.boot.AddPlugins(plugin)
 	jewel.cmd = append(jewel.cmd, jewel.app.Command("server", "Start a http server"))
 	return jewel
@@ -98,16 +95,7 @@ func (jewel *Jewel) HttpStart(httpFun func(router *gin.RouterGroup, injector *in
 				jewel.boot = jewel.boot.Start(*cmd.Param["dir"].(*string), *cmd.Param["env"].(*string))
 
 			}
-			etcRegister := jewel.boot.GetInject().ServicePtrByName("plugin:etcd_register")
-			if etcRegister != nil {
-				reg := etcRegister.(*registry.EtcRegistry)
-				registerOperation := registry.EtcRegisterOperation{
-					Registry: reg,
-				}
-				jewel.boot.BindHttp(httpFun, registerOperation.HttpBindOp)
-			} else {
-				jewel.boot.BindHttp(httpFun)
-			}
+			jewel.boot.BindHttp(httpFun)
 			jewel.boot.Close()
 			return
 		} else if cmd.Name == c {
