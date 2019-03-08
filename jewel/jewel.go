@@ -26,8 +26,6 @@ func NewHttp() *Jewel {
 		app:     kingpin.UsageTemplate(kingpin.DefaultUsageTemplate),
 		cmdFunc: make(map[string]func()),
 	}
-	var plugin context.Plugin
-	jewel.boot.AddPlugins(plugin)
 	jewel.cmd = append(jewel.cmd, jewel.app.Command("server", "Start a http server"))
 	return jewel
 }
