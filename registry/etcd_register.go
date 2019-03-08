@@ -6,11 +6,11 @@ import (
 	"crypto/tls"
 	"github.com/cihub/seelog"
 	"context"
-	"go.etcd.io/etcd/clientv3"
 	"strconv"
 	"encoding/json"
 	"errors"
 	"sync/atomic"
+	"github.com/etcd-io/etcd/clientv3"
 )
 
 type JewelRegisterProperties struct {

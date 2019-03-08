@@ -2,11 +2,11 @@ package registry
 
 import (
 	"testing"
-	"go.etcd.io/etcd/clientv3"
 	"log"
 	"context"
 	"time"
 	"fmt"
+	"github.com/etcd-io/etcd/clientv3"
 )
 
 func TestRegister(t *testing.T) {
