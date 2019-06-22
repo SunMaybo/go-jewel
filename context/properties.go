@@ -277,14 +277,14 @@ func (restOptions *RestProperties) Create() (*rest.RestTemplate, error) {
 		config.ReplyCount = 3
 	}
 	if restOptions.SocketTimeout != nil {
-		config.SocketTimeout = time.Duration(*restOptions.SocketTimeout)*time.Millisecond
+		config.SocketTimeout = time.Duration(*restOptions.SocketTimeout) * time.Millisecond
 	} else {
 		config.SocketTimeout = 3 * time.Second
 	}
 	if restOptions.IdleConnTimeout != nil {
-		config.IdleConnTimeout = time.Duration(*restOptions.IdleConnTimeout)*time.Millisecond
+		config.IdleConnTimeout = time.Duration(*restOptions.IdleConnTimeout) * time.Millisecond
 	} else {
-		config.IdleConnTimeout = 10  *time.Millisecond
+		config.IdleConnTimeout = 10 * time.Millisecond
 	}
 	if restOptions.Authorization != nil {
 		config.Authorization = *restOptions.Authorization
@@ -297,7 +297,10 @@ func (restOptions *RestProperties) Create() (*rest.RestTemplate, error) {
 
 type JewelProperties struct {
 	Jewel struct {
-		Name   string           `json:"name" yaml:"name" xml:"name"`
+		Name string `json:"name" yaml:"name" xml:"name"`
+		Log struct {
+			Level string `json:"level" yaml:"level" xml:"level"`
+		} `json:"log" yaml:"log" xml:"log"`
 		Server ServerProperties `json:"server" yaml:"server" xml:"server"`
 		Profiles struct {
 			Active string `yaml:"active" xml:"active" json:"active"`
