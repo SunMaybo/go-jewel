@@ -7,11 +7,11 @@ import (
 	"os"
 	"strconv"
 	"time"
-	"github.com/cihub/seelog"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/client_golang/prometheus"
 	"strings"
+	"go.uber.org/zap"
 )
 
 var defaultMetricPath = "/metrics"
@@ -220,7 +220,7 @@ func (p *Prometheus) sendMetricsToPushGateway(metrics []byte) {
 	req, err := http.NewRequest("POST", p.getPushGatewayURL(), bytes.NewBuffer(metrics))
 	client := &http.Client{}
 	if _, err = client.Do(req); err != nil {
-		seelog.Error("Error sending to push gateway")
+		zap.S().Error("Error sending to push gateway")
 	}
 }
 
@@ -314,7 +314,7 @@ func (p *Prometheus) registerMetrics(subsystem string) {
 	for _, metricDef := range p.MetricsList {
 		metric := NewMetric(metricDef, subsystem)
 		if err := prometheus.Register(metric); err != nil {
-			seelog.Errorf("%s could not be registered in Prometheus", metricDef.Name)
+			zap.S().Errorf("%s could not be registered in Prometheus", metricDef.Name)
 		}
 		switch metricDef {
 		case reqCnt:
