@@ -3,6 +3,7 @@ module go-jewel
 go 1.12
 
 require (
+	github.com/DeanThompson/ginpprof v0.0.0-20190408063150-3be636683586
 	github.com/SunMaybo/jewel-inject v0.0.0-20180918031735-d2c292713844
 	github.com/SunMaybo/jewel-template/template v0.0.0-20190520101326-2ce7052292b7
 	github.com/alecthomas/kingpin v2.2.6+incompatible
