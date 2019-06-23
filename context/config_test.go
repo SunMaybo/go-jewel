@@ -5,11 +5,6 @@ import (
 	"fmt"
 )
 
-func TestApp(t *testing.T) {
-	app := Load("./")
-	fmt.Println(app)
-}
-
 func TestConfigDir(t *testing.T) {
 	hash := make(map[interface{}]interface{})
 	hash["1234"] = 34

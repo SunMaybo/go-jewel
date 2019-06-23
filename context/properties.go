@@ -16,6 +16,8 @@ import (
 	"github.com/SunMaybo/jewel-template/template/rest"
 	"net/http"
 	"strconv"
+	"github.com/wantedly/gorm-zap"
+	"github.com/SunMaybo/go-jewel/logs"
 )
 
 type SqlDataSource struct {
@@ -44,6 +46,7 @@ func (ds *SqlDataSource) Create(name string) (*gorm.DB, error) {
 	if ds.MaxOpenConns != nil {
 		db.DB().SetMaxOpenConns(*ds.MaxOpenConns)
 	}
+	db.SetLogger(gormzap.New(logs.LOGGER))
 	return db, nil
 }
 
@@ -202,11 +205,11 @@ type Manager struct {
 }
 
 type ServerProperties struct {
-	GinMode *string `json:"gin_mode" yaml:"gin_mode" xml:"gin_mode"`
-
+	GinMode     *string `json:"gin_mode" yaml:"gin_mode" xml:"gin_mode"`
+	EnablePprof *bool   `json:"enable_pprof" yaml:"enable_pprof" xml:"enable_pprof"`
 	ContextPath *string `json:"context_path" yaml:"context_path" xml:"context_path"`
 
-	Port *int64 `json:"port" yaml:"port" xml:"port"`
+	Port int64 `json:"port" yaml:"port" xml:"port"`
 
 	Templates *string `json:"templates" yaml:"templates" xml:"templates"`
 
@@ -231,9 +234,7 @@ type ServerProperties struct {
 
 func (serverProperties *ServerProperties) Create() (*http.Server, error) {
 	server := &http.Server{}
-	if serverProperties.Port != nil {
-		server.Addr = ":" + strconv.FormatInt(*serverProperties.Port, 10)
-	}
+	server.Addr = ":" + strconv.FormatInt(serverProperties.Port, 10)
 	if serverProperties.IdleTimeout != nil {
 		server.IdleTimeout = time.Duration(*serverProperties.IdleTimeout * 1000000)
 	}
@@ -295,22 +296,25 @@ func (restOptions *RestProperties) Create() (*rest.RestTemplate, error) {
 	return rest.Config(config), nil
 }
 
+type Log struct {
+	Level string `json:"level" yaml:"level" xml:"level"`
+}
+type Profiles struct {
+	Active string `yaml:"active" xml:"active" json:"active"`
+}
+type Jewel struct {
+	Name     string                     `json:"name" yaml:"name" xml:"name"`
+	Log      Log                        `json:"log" yaml:"log" xml:"log"`
+	Server   ServerProperties           `json:"server" yaml:"server" xml:"server"`
+	Profiles Profiles                   `json:"profiles" yaml:"profiles" xml:"profiles"`
+	MySql    map[string]SqlDataSource   `json:"mysql" yaml:"mysql" xml:"mysql"`
+	Postgres map[string]SqlDataSource   `json:"postgres" yaml:"postgres" xml:"postgres"`
+	Redis    map[string]RedisDataSource `json:"redis" yaml:"redis" xml:"redis"`
+	Mgo      map[string]MgoDataSource   `json:"mgo" yaml:"mgo" xml:"mgo"`
+	Rest     map[string]RestProperties  `json:"rest" yaml:"rest" xml:"rest"`
+}
 type JewelProperties struct {
-	Jewel struct {
-		Name string `json:"name" yaml:"name" xml:"name"`
-		Log struct {
-			Level string `json:"level" yaml:"level" xml:"level"`
-		} `json:"log" yaml:"log" xml:"log"`
-		Server ServerProperties `json:"server" yaml:"server" xml:"server"`
-		Profiles struct {
-			Active string `yaml:"active" xml:"active" json:"active"`
-		} `json:"profiles" yaml:"profiles" xml:"profiles"`
-		MySql    map[string]SqlDataSource   `json:"mysql" yaml:"mysql" xml:"mysql"`
-		Postgres map[string]SqlDataSource   `json:"postgres" yaml:"postgres" xml:"postgres"`
-		Redis    map[string]RedisDataSource `json:"redis" yaml:"redis" xml:"redis"`
-		Mgo      map[string]MgoDataSource   `json:"mgo" yaml:"mgo" xml:"mgo"`
-		Rest     map[string]RestProperties  `json:"rest" yaml:"rest" xml:"rest"`
-	} `json:"jewel" yaml:"jewel" xml:"jewel"`
+	Jewel Jewel `json:"jewel" yaml:"jewel" xml:"jewel"`
 }
 type Properties struct {
 	locker sync.Mutex

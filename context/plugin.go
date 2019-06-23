@@ -6,5 +6,5 @@ type Plugin interface {
 	Open(injector *inject.Injector) error
 	Health() error
 	Close()
-	Interface() (string, interface{})
+	InterfaceName() string
 }

@@ -7,8 +7,8 @@ import (
 	"github.com/SunMaybo/jewel-template/template/rest"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"github.com/cihub/seelog"
 	"github.com/SunMaybo/jewel-inject/inject"
+	"go.uber.org/zap"
 )
 
 type BasePlugin struct {
@@ -76,7 +76,7 @@ func (d *BasePlugin) Open(injector *inject.Injector) error {
 				return err
 			}
 			d.MysqlDb[name] = db
-			seelog.Infof("mysql connection success,dataSource:%s", name)
+			zap.S().Infof("mysql connection success,dataSource:%s", name)
 		}
 	}
 
@@ -91,7 +91,7 @@ func (d *BasePlugin) Open(injector *inject.Injector) error {
 				return err
 			}
 			d.RedisDb[name] = client
-			seelog.Infof("redis connection success,dataSource:%s", name)
+			zap.S().Infof("redis connection success,dataSource:%s", name)
 		}
 	}
 
@@ -106,7 +106,7 @@ func (d *BasePlugin) Open(injector *inject.Injector) error {
 				return err
 			}
 			d.MgoDb[name] = db
-			seelog.Infof("mgo connection success,dataSource:%s", name)
+			zap.S().Infof("mgo connection success,dataSource:%s", name)
 		}
 	}
 
@@ -121,7 +121,7 @@ func (d *BasePlugin) Open(injector *inject.Injector) error {
 				return err
 			}
 			d.PostDb[name] = db
-			seelog.Infof("postgres connection success,dataSource:%s", name)
+			zap.S().Infof("postgres connection success,dataSource:%s", name)
 		}
 	}
 
@@ -136,7 +136,7 @@ func (d *BasePlugin) Open(injector *inject.Injector) error {
 				return err
 			}
 			d.RestTemplate[name] = restTemplate
-			seelog.Infof("rest create success,templateName:%s", name)
+			zap.S().Infof("rest create success,templateName:%s", name)
 		}
 	}
 
@@ -148,7 +148,7 @@ func (d *BasePlugin) Health() error {
 		for name, db := range d.MysqlDb {
 			err := db.Exec("select 1").Error
 			if err != nil {
-				seelog.Error("mysql db health error:" + name)
+				zap.S().Error("mysql db health error:" + name)
 				return err
 			}
 		}
@@ -157,7 +157,7 @@ func (d *BasePlugin) Health() error {
 		for name, db := range d.RedisDb {
 			_, err := db.Ping().Result()
 			if err != nil {
-				seelog.Error("redis client health error:" + name)
+				zap.S().Error("redis client health error:" + name)
 				return err
 			}
 		}
@@ -166,7 +166,7 @@ func (d *BasePlugin) Health() error {
 		for name, db := range d.MgoDb {
 			_, err := db.CollectionNames()
 			if err != nil {
-				seelog.Error("mgo session health error:" + name)
+				zap.S().Error("mgo session health error:" + name)
 				return err
 			}
 		}
@@ -175,7 +175,7 @@ func (d *BasePlugin) Health() error {
 		for name, db := range d.PostDb {
 			err := db.Exec("select 1").Error
 			if err != nil {
-				seelog.Error("postgres db health error:" + name)
+				zap.S().Error("postgres db health error:" + name)
 				return err
 			}
 		}
@@ -205,6 +205,6 @@ func (d *BasePlugin) Close() {
 		}
 	}
 }
-func (d *BasePlugin) Interface() (string, interface{}) {
-	return "base_plugin", d
+func (d *BasePlugin) InterfaceName() string {
+	return "base_plugin"
 }

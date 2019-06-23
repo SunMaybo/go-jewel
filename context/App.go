@@ -3,54 +3,29 @@ package context
 import (
 	"io/ioutil"
 	"strings"
-	"log"
 	"os"
-	"github.com/cihub/seelog"
 )
 
 var suffixCfgName = []string{"yml", "yaml", "xml", "json"}
 
-func Load(dir string) Config {
-	ifs, err := ioutil.ReadDir(dir)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	var name = ""
-loop:
-	for _, v := range ifs {
-		for e := range suffixCfgName {
-			if !v.IsDir() && strings.HasPrefix(v.Name(), "app."+suffixCfgName[e]) {
-				name = v.Name()
-				break loop
-			}
-		}
-
-	}
-	app := Config{}
-	if name != "" {
-		app.Load(dir + "/" + name)
-	}
-	return app
-}
-func GetCurrentDirectory(dir string) string {
+func GetCurrentDirectory(dir string) (string, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
-		seelog.Error(err)
-		os.Exit(1)
+		return "", err
 	}
 	if dir == "" {
-		return pwd
+		return pwd, nil
 	}
 	if strings.HasPrefix(dir, ".") {
-		return pwd + "/" + dir
+		return pwd + "/" + dir, nil
 	}
-	return dir
+	return dir, nil
 }
 
 func LoadFileName(dir string) string {
 	ifs, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Fatalln(err)
+		return ""
 	}
 	var name = ""
 loop:
@@ -63,12 +38,16 @@ loop:
 		}
 
 	}
-	return dir + "/" + name
+	if name == "" {
+		return ""
+	} else {
+		return dir + "/" + name
+	}
 }
 func LoadCfg(dir string, inter interface{}) {
 	ifs, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Fatalln(err)
+		return
 	}
 	var name = ""
 loop:
@@ -88,7 +67,7 @@ loop:
 func LoadEnvCfg(dir, env string, inter interface{}) {
 	ifs, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Fatalln(err)
+		return
 	}
 	var name = ""
 loop:
@@ -109,7 +88,7 @@ loop:
 func LoadEnvFileName(dir, env string) string {
 	ifs, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Fatalln(err)
+		return ""
 	}
 	var name = ""
 loop:

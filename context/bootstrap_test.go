@@ -15,3 +15,8 @@ func TestBootStrap(t *testing.T) {
 	})
 	boot.StartAndDir("./../config")
 }
+func TestPlugin(t *testing.T) {
+	var plugin Plugin
+	plugin = &BasePlugin{}
+	fmt.Println(plugin)
+}

@@ -2,8 +2,9 @@ package context
 
 import (
 	"flag"
-	"fmt"
 	"github.com/SunMaybo/jewel-inject/inject"
+	"log"
+	"github.com/SunMaybo/go-jewel/logs"
 )
 
 type Cmd struct {
@@ -26,29 +27,25 @@ func (c *Cmd) httpCmd(fun func()) {
 	c.Cmd["http"] = fun
 }
 func (c *Cmd) Start(b *Boot, dir, env string) {
-	fmt.Println("                                                                          /$$")
-	fmt.Println("                                                                          | $$")
-	fmt.Println("          /$$$$$$   /$$$$$$          /$$  /$$$$$$  /$$  /$$  /$$  /$$$$$$ | $$")
-	fmt.Println("         /$$__  $$ /$$__  $$ /$$$$$$|__/ /$$__  $$| $$ | $$ | $$ /$$__  $$| $$")
-	fmt.Println("	| $$  \\ $$| $$  \\ $$|______/ /$$| $$$$$$$$| $$ | $$ | $$| $$$$$$$$| $$")
-	fmt.Println("	| $$  | $$| $$  | $$        | $$| $$_____/| $$ | $$ | $$| $$_____/| $$")
-	fmt.Println("	|  $$$$$$$|  $$$$$$/        | $$|  $$$$$$$|  $$$$$/$$$$/|  $$$$$$$| $$")
-	fmt.Println("	\\____  $$ \\______/         | $$ \\_______/ \\_____/\\___/  \\_______/|__/")
-	fmt.Println("	/$$  \\ $$             /$$  | $$")
-	fmt.Println("	|  $$$$$$/            |  $$$$$$/")
-	fmt.Println("	\\______/              \\______/")
-	fmt.Println("    ::  go-jewel  ::  (V2.0.1)")
 	properties := Properties{}
-	dir = GetCurrentDirectory(dir)
+	dir, err := GetCurrentDirectory(dir)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fileName := LoadFileName(dir)
-	jewel := &JewelProperties{}
-	properties.Load(fileName, jewel)
+	jewel := &JewelProperties{
+		Jewel: Jewel{Name: "jewel-project", Profiles: Profiles{Active: "test"}, Log: Log{Level: "debug"}, Server: ServerProperties{Port: 8080}},
+	}
+
+	if fileName != "" {
+		properties.Load(fileName, jewel)
+	}
 	if env == "" {
 		env = jewel.Jewel.Profiles.Active
 	} else {
 		jewel.Jewel.Profiles.Active = env
 	}
-	NewLogger(dir + "/log.xml")
+	logs.GetLog(jewel.Jewel.Log.Level)
 	for _, v := range b.cfgPointer {
 		LoadCfg(dir, v)
 		LoadEnvCfg(dir, env, v)
@@ -59,21 +56,10 @@ func (c *Cmd) Start(b *Boot, dir, env string) {
 	}
 	b.inject.Apply(b.cfgPointer ...)
 	b.inject.Apply(jewel)
-
-	fmt.Println("=============================================================")
-	fmt.Printf("             project:  %s                        \n", jewel.Jewel.Name)
-	fmt.Printf("         environment:  %s                    \n", jewel.Jewel.Profiles.Active)
-	if jewel.Jewel.Server.Port != nil {
-		fmt.Printf("                port:  %d                           \n", *jewel.Jewel.Server.Port)
-	}
-	fmt.Println("=============================================================")
-
 	c.Cmd["default"]() //默认的方法
-
 	b.inject.Apply(jewel)
 	b.inject.Apply(b.injector...)
 	b.inject.Inject() //依赖扫描于加载
-
 	for e := range b.asyncFuns {
 		go func(fun func(inject *inject.Injector)) {
 			fun(b.GetInject())

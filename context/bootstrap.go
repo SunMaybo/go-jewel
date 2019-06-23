@@ -1,17 +1,18 @@
 package context
 
 import (
-	"github.com/gin-gonic/gin"
 	"time"
-	"github.com/cihub/seelog"
 	"net/http"
-	"os"
 	"github.com/SunMaybo/jewel-inject/inject"
 	"reflect"
-	"log"
 	"github.com/robfig/cron"
 	"html/template"
 	"github.com/SunMaybo/go-jewel/prometheus"
+	"go.uber.org/zap"
+	"github.com/gin-gonic/gin"
+	"github.com/SunMaybo/go-jewel/logs"
+	"fmt"
+	"github.com/DeanThompson/ginpprof"
 )
 
 type Boot struct {
@@ -69,7 +70,7 @@ func (b *Boot) AddAsyncFun(fun func(injector *inject.Injector)) *Boot {
 }
 func checkPointer(pointer interface{}) {
 	if reflect.TypeOf(pointer).Kind() != reflect.Ptr {
-		log.Fatalf("param must be pointer type")
+		zap.S().Fatal("param must be pointer type")
 	}
 }
 func (b *Boot) AddApplyCfg(pointers ... interface{}) *Boot {
@@ -109,12 +110,10 @@ func (b *Boot) pluginService() {
 	for _, plugin := range b.plugins {
 		err := plugin.Open(b.GetInject())
 		if err != nil {
-			seelog.Error(err)
-			seelog.Flush()
-			os.Exit(-1)
+			zap.S().Fatal(err)
 		}
-		name, inter := plugin.Interface()
-		b.GetInject().ApplyWithName("plugin:"+name, inter)
+		name := plugin.InterfaceName()
+		b.GetInject().ApplyWithName("plugin:"+name, &plugin)
 	}
 }
 func (b *Boot) Close() {
@@ -126,9 +125,7 @@ func (b *Boot) basePluginService() {
 	base := NewBasePlugin()
 	err := base.Open(b.GetInject())
 	if err != nil {
-		seelog.Error(err)
-		seelog.Flush()
-		os.Exit(-1)
+		zap.S().Fatal(err)
 	}
 	if base.RedisDb != nil {
 		for name, client := range base.RedisDb {
@@ -155,8 +152,10 @@ func (b *Boot) basePluginService() {
 			b.inject.ApplyWithName("rest."+name, restTemplate)
 		}
 	}
-	name, inter := base.Interface()
-	b.GetInject().ApplyWithName("plugin:"+name, inter)
+	name := base.InterfaceName()
+	var plugin Plugin
+	plugin = base
+	b.GetInject().ApplyWithName("plugin:"+name, &plugin)
 }
 func (b *Boot) http(fs []func(router *gin.RouterGroup, injector *inject.Injector)) {
 	var jewel JewelProperties
@@ -164,13 +163,20 @@ func (b *Boot) http(fs []func(router *gin.RouterGroup, injector *inject.Injector
 	serverProperties := jewel.Jewel.Server
 	server, err := serverProperties.Create()
 	if err != nil {
-		log.Fatal(err)
+		zap.S().Fatal(err)
 	}
-	engine := gin.Default()
+	fmt.Printf("listen and serve on %s\n", server.Addr)
+	gin.DisableConsoleColor()
 	if serverProperties.GinMode != nil {
 		gin.SetMode(*serverProperties.GinMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
+	}
+	engine := gin.New()
+	engine.Use(logs.Logger(logs.LOGGER))
+	engine.Use(gin.Recovery())
+	if serverProperties.EnablePprof == nil || *serverProperties.EnablePprof {
+		ginpprof.Wrap(engine)
 	}
 	var router *gin.RouterGroup
 	if serverProperties.ContextPath != nil {
@@ -181,14 +187,15 @@ func (b *Boot) http(fs []func(router *gin.RouterGroup, injector *inject.Injector
 	if serverProperties.Templates != nil {
 		engine.SetHTMLTemplate(template.New(*serverProperties.Templates))
 	}
-	b.defaultRouter(router, jewel.Jewel.Profiles.Active, *serverProperties.Port, time.Now().String(), jewel.Jewel.Name)
+	b.defaultRouter(router, jewel.Jewel.Profiles.Active, serverProperties.Port, time.Now().String(), jewel.Jewel.Name)
 	registeries(fs)
 	load(router, b.GetInject())
 	server.Handler = engine
 	err = server.ListenAndServe()
 	if err != nil {
-		log.Fatal(err)
+		zap.S().Fatal(err)
 	}
+
 }
 
 type Info struct {
@@ -214,12 +221,14 @@ func (b *Boot) defaultRouter(engine *gin.RouterGroup, env string, port int64, bo
 		services := b.GetInject().ServiceByPrefixName("plugin:")
 		if services == nil {
 			context.JSON(http.StatusOK, gin.H{"status": "UP"})
+			return
 		}
 		for _, service := range services {
 			plugin := service.(Plugin)
 			err := plugin.Health()
 			if err != nil {
 				context.JSON(http.StatusOK, gin.H{"status": "DOWN", "message": err.Error()})
+				return
 			}
 		}
 		context.JSON(http.StatusOK, gin.H{"status": "UP"})
