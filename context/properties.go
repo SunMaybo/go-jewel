@@ -16,8 +16,6 @@ import (
 	"github.com/SunMaybo/jewel-template/template/rest"
 	"net/http"
 	"strconv"
-	"github.com/wantedly/gorm-zap"
-	"github.com/SunMaybo/go-jewel/logs"
 )
 
 type SqlDataSource struct {
@@ -46,7 +44,6 @@ func (ds *SqlDataSource) Create(name string) (*gorm.DB, error) {
 	if ds.MaxOpenConns != nil {
 		db.DB().SetMaxOpenConns(*ds.MaxOpenConns)
 	}
-	db.SetLogger(gormzap.New(logs.LOGGER))
 	return db, nil
 }
 
