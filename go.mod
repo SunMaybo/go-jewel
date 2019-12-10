@@ -5,7 +5,7 @@ go 1.12
 require (
 	github.com/DeanThompson/ginpprof v0.0.0-20190408063150-3be636683586
 	github.com/SunMaybo/jewel-inject v0.0.0-20180918031735-d2c292713844
-	github.com/SunMaybo/jewel-template 3.0.0
+	github.com/SunMaybo/jewel-template v1.0.2-0.20191210162201-eb338ef3c767
 	github.com/alecthomas/kingpin v2.2.6+incompatible
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-redis/redis v6.15.6+incompatible
