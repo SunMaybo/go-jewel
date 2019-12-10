@@ -13,7 +13,7 @@ import (
 	"github.com/go-redis/redis"
 	"crypto/tls"
 	"gopkg.in/mgo.v2"
-	"github.com/SunMaybo/jewel-template/template/rest"
+	"github.com/SunMaybo/jewel-template/rest"
 	"net/http"
 	"strconv"
 )

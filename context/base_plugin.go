@@ -4,7 +4,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/go-redis/redis"
 	"gopkg.in/mgo.v2"
-	"github.com/SunMaybo/jewel-template/template/rest"
+	"github.com/SunMaybo/jewel-template/rest"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/SunMaybo/jewel-inject/inject"
